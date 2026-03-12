@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZChat</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="chat.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<div class="app-container">
+    <div id="home-screen">
+        <header class="header">
+            <div class="top-bar">
+                <h2>ZChat</h2>
+                <i class="fa-solid fa-magnifying-glass nav-btn"></i>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-item active" id="tab-chats">
+                    <div class="icon-circle pink"><i class="fa-solid fa-message"></i></div><span>Chats</span>
+                </div>
+                <div class="filter-item" id="tab-contacts">
+                    <div class="icon-circle blue"><i class="fa-solid fa-user"></i></div><span>Contacts</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="content">
+            <div id="chats-view">
+                <div id="empty-chats" class="hidden" style="text-align: center; margin-top: 50px;">
+                    <p>No chats yet.</p>
+                    <button onclick="switchTab('contacts')" style="padding: 10px; margin-top: 10px;">Start a Conversation</button>
+                </div>
+                <div id="recent-chats-list"></div>
+            </div>
+
+            <div id="contacts-view" class="hidden">
+                <button id="invite-btn" style="width: 100%; padding: 15px; background: #25D366; color: white; border: none; font-weight: bold; margin-bottom: 10px;">
+                    <i class="fa-solid fa-share-nodes"></i> Invite Friends via Link
+                </button>
+                <div id="user-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="chat-screen" class="hidden">
+        <header class="chat-header">
+            <i class="fa-solid fa-arrow-left" id="back-btn"></i>
+            <div class="chat-user-info">
+                <img src="" id="chat-avatar" class="mini-avatar">
+                <div>
+                    <h3 id="chat-with-name">Username</h3>
+                    <small id="chat-status" style="font-size: 10px;">Offline</small>
+                </div>
+            </div>
+            <i class="fa-solid fa-phone"></i>
+        </header>
+        
+        <div class="chat-messages" id="message-box"></div>
+        
+        <div class="chat-input-area">
+            <input type="file" id="image-upload" accept="image/*" style="display: none;">
+            <label for="image-upload"><i class="fa-solid fa-paperclip"></i></label>
+            
+            <input type="text" placeholder="Type a message..." id="msg-input">
+            
+            <button id="mic-btn"><i class="fa-solid fa-microphone"></i></button>
+            <button id="send-btn" class="hidden"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="chat.js"></script>
+<script>
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(() => console.log('Service Worker Registered'))
+    .catch((err) => console.log('Service Worker registration failed:', err));
+}
+</script>
+</body>
+</html>

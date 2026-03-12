@@ -327,3 +327,20 @@ micBtn.addEventListener("mouseleave", stopRecording); // If they drag mouse off 
 micBtn.addEventListener("touchstart", startRecording, { passive: false });
 micBtn.addEventListener("touchend", stopRecording);
 micBtn.addEventListener("touchcancel", stopRecording);
+<div class="user-card" onclick="startChat('${docSnap.id}','${user.name}','${user.photo}')">
+    <div class="profile-pic-container">
+        <div class="online-dot ${user.online ? 'online' : 'offline'}"></div>
+        <img src="${user.photo}" class="profile-pic">
+        <div class="avatar-tag pink">F, 29</div> 
+    </div>
+    <div class="user-info">
+        <div class="user-name-row">
+            <h3>${user.name}</h3>
+            <span class="user-time">09:25 AM</span> </div>
+        <div class="user-msg-row">
+            <i class="fa-solid fa-check-double check-icon"></i>
+            <p>Tap to start chatting...</p>
+        </div>
+    </div>
+</div>
+

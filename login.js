@@ -1,31 +1,21 @@
-// ================= SESSION CHECK =================
-const savedUser = localStorage.getItem("crunkUser");
-if (savedUser) {
-    window.location.href = "home.html";
-}
+// ==================== SESSION CHECK ====================
+(function checkExistingSession() {
+    const savedUser = localStorage.getItem("crunkUser");
+    if (savedUser) {
+        console.log("✅ User already logged in, redirecting to home...");
+        window.location.replace("home.html");
+    }
+})();
 
-// ================= LABEL ANIMATION =================
-window.addEventListener('load', () => {
-    const container = document.querySelector('.container');
-    if (container) container.style.opacity = 1;
-
-    const labels = document.querySelectorAll('.form-control label');
-    labels.forEach(label => {
-        label.innerHTML = label.innerText
-            .split('')
-            .map((letter, idx) => `<span style="transition-delay:${idx * 30}ms">${letter}</span>`)
-            .join('');
-    });
-});
-
-// ================= FIREBASE MODULAR SETUP =================
+// ==================== FIREBASE SETUP ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { 
     getAuth, 
     GoogleAuthProvider, 
     signInWithPopup,
     signInWithRedirect,
-    getRedirectResult
+    getRedirectResult,
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 import { 
     getFirestore, 
@@ -38,7 +28,7 @@ import {
     getDocs 
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-// ================= FIREBASE CONFIG (Same as chat app) =================
+// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBW0Sz7TODfa8tQJTfNUaLhfK9qJhdA1yE",
     authDomain: "crunck-app.firebaseapp.com",
@@ -50,20 +40,20 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+console.log("🚀 Initializing Firebase...");
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Configure Google provider
+// Configure Google Provider
 googleProvider.setCustomParameters({
     prompt: 'select_account'
 });
 
-window.auth = auth;
-window.db = db;
+console.log("✅ Firebase initialized successfully");
 
-// ================= COUNTRY CODES API =================
+// ==================== COUNTRY CODES API ====================
 async function fetchCountryCodes() {
     try {
         const response = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,idd,flags');
@@ -79,387 +69,319 @@ async function fetchCountryCodes() {
                 return {
                     code: code,
                     country: country.name.common,
+                    flag: country.flags?.png || '',
                     cca2: country.cca2.toLowerCase()
                 };
             })
             .sort((a, b) => a.country.localeCompare(b.country));
     } catch (error) {
         console.error('Error fetching countries:', error);
-        return getFallbackCountryCodes();
+        return getFallbackCountries();
     }
 }
 
-// ================= FALLBACK COUNTRY CODES =================
-function getFallbackCountryCodes() {
+function getFallbackCountries() {
     return [
-        { code: "+93", country: "Afghanistan" },
-        { code: "+355", country: "Albania" },
-        { code: "+213", country: "Algeria" },
-        { code: "+376", country: "Andorra" },
-        { code: "+244", country: "Angola" },
-        { code: "+54", country: "Argentina" },
-        { code: "+374", country: "Armenia" },
-        { code: "+61", country: "Australia" },
-        { code: "+43", country: "Austria" },
-        { code: "+994", country: "Azerbaijan" },
-        { code: "+973", country: "Bahrain" },
-        { code: "+880", country: "Bangladesh" },
-        { code: "+375", country: "Belarus" },
-        { code: "+32", country: "Belgium" },
-        { code: "+501", country: "Belize" },
-        { code: "+229", country: "Benin" },
-        { code: "+975", country: "Bhutan" },
-        { code: "+591", country: "Bolivia" },
-        { code: "+387", country: "Bosnia and Herzegovina" },
-        { code: "+267", country: "Botswana" },
-        { code: "+55", country: "Brazil" },
-        { code: "+673", country: "Brunei" },
-        { code: "+359", country: "Bulgaria" },
-        { code: "+226", country: "Burkina Faso" },
-        { code: "+257", country: "Burundi" },
-        { code: "+855", country: "Cambodia" },
-        { code: "+237", country: "Cameroon" },
-        { code: "+1", country: "Canada" },
-        { code: "+238", country: "Cape Verde" },
-        { code: "+236", country: "Central African Republic" },
-        { code: "+235", country: "Chad" },
-        { code: "+56", country: "Chile" },
-        { code: "+86", country: "China" },
-        { code: "+57", country: "Colombia" },
-        { code: "+269", country: "Comoros" },
-        { code: "+242", country: "Congo" },
-        { code: "+506", country: "Costa Rica" },
-        { code: "+385", country: "Croatia" },
-        { code: "+53", country: "Cuba" },
-        { code: "+357", country: "Cyprus" },
-        { code: "+420", country: "Czech Republic" },
-        { code: "+45", country: "Denmark" },
-        { code: "+253", country: "Djibouti" },
-        { code: "+593", country: "Ecuador" },
-        { code: "+20", country: "Egypt" },
-        { code: "+503", country: "El Salvador" },
-        { code: "+240", country: "Equatorial Guinea" },
-        { code: "+291", country: "Eritrea" },
-        { code: "+372", country: "Estonia" },
-        { code: "+251", country: "Ethiopia" },
-        { code: "+679", country: "Fiji" },
-        { code: "+358", country: "Finland" },
-        { code: "+33", country: "France" },
-        { code: "+241", country: "Gabon" },
-        { code: "+220", country: "Gambia" },
-        { code: "+995", country: "Georgia" },
-        { code: "+49", country: "Germany" },
-        { code: "+233", country: "Ghana" },
-        { code: "+30", country: "Greece" },
-        { code: "+299", country: "Greenland" },
-        { code: "+502", country: "Guatemala" },
-        { code: "+224", country: "Guinea" },
-        { code: "+245", country: "Guinea-Bissau" },
-        { code: "+592", country: "Guyana" },
-        { code: "+509", country: "Haiti" },
-        { code: "+504", country: "Honduras" },
-        { code: "+852", country: "Hong Kong" },
-        { code: "+36", country: "Hungary" },
-        { code: "+354", country: "Iceland" },
-        { code: "+91", country: "India" },
-        { code: "+62", country: "Indonesia" },
-        { code: "+98", country: "Iran" },
-        { code: "+964", country: "Iraq" },
-        { code: "+353", country: "Ireland" },
-        { code: "+972", country: "Israel" },
-        { code: "+39", country: "Italy" },
-        { code: "+225", country: "Ivory Coast" },
-        { code: "+81", country: "Japan" },
-        { code: "+962", country: "Jordan" },
-        { code: "+7", country: "Kazakhstan" },
-        { code: "+254", country: "Kenya" },
-        { code: "+686", country: "Kiribati" },
-        { code: "+965", country: "Kuwait" },
-        { code: "+996", country: "Kyrgyzstan" },
-        { code: "+856", country: "Laos" },
-        { code: "+371", country: "Latvia" },
-        { code: "+961", country: "Lebanon" },
-        { code: "+266", country: "Lesotho" },
-        { code: "+231", country: "Liberia" },
-        { code: "+218", country: "Libya" },
-        { code: "+423", country: "Liechtenstein" },
-        { code: "+370", country: "Lithuania" },
-        { code: "+352", country: "Luxembourg" },
-        { code: "+853", country: "Macau" },
-        { code: "+389", country: "North Macedonia" },
-        { code: "+261", country: "Madagascar" },
-        { code: "+265", country: "Malawi" },
-        { code: "+60", country: "Malaysia" },
-        { code: "+960", country: "Maldives" },
-        { code: "+223", country: "Mali" },
-        { code: "+356", country: "Malta" },
-        { code: "+692", country: "Marshall Islands" },
-        { code: "+222", country: "Mauritania" },
-        { code: "+230", country: "Mauritius" },
-        { code: "+52", country: "Mexico" },
-        { code: "+691", country: "Micronesia" },
-        { code: "+373", country: "Moldova" },
-        { code: "+377", country: "Monaco" },
-        { code: "+976", country: "Mongolia" },
-        { code: "+382", country: "Montenegro" },
-        { code: "+212", country: "Morocco" },
-        { code: "+258", country: "Mozambique" },
-        { code: "+95", country: "Myanmar" },
-        { code: "+264", country: "Namibia" },
-        { code: "+674", country: "Nauru" },
-        { code: "+977", country: "Nepal" },
-        { code: "+31", country: "Netherlands" },
-        { code: "+64", country: "New Zealand" },
-        { code: "+505", country: "Nicaragua" },
-        { code: "+227", country: "Niger" },
-        { code: "+234", country: "Nigeria" },
-        { code: "+850", country: "North Korea" },
-        { code: "+47", country: "Norway" },
-        { code: "+968", country: "Oman" },
-        { code: "+92", country: "Pakistan" },
-        { code: "+680", country: "Palau" },
-        { code: "+970", country: "Palestine" },
-        { code: "+507", country: "Panama" },
-        { code: "+675", country: "Papua New Guinea" },
-        { code: "+595", country: "Paraguay" },
-        { code: "+51", country: "Peru" },
-        { code: "+63", country: "Philippines" },
-        { code: "+48", country: "Poland" },
-        { code: "+351", country: "Portugal" },
-        { code: "+974", country: "Qatar" },
-        { code: "+40", country: "Romania" },
-        { code: "+7", country: "Russia" },
-        { code: "+250", country: "Rwanda" },
-        { code: "+685", country: "Samoa" },
-        { code: "+378", country: "San Marino" },
-        { code: "+239", country: "Sao Tome and Principe" },
-        { code: "+966", country: "Saudi Arabia" },
-        { code: "+221", country: "Senegal" },
-        { code: "+381", country: "Serbia" },
-        { code: "+248", country: "Seychelles" },
-        { code: "+232", country: "Sierra Leone" },
-        { code: "+65", country: "Singapore" },
-        { code: "+421", country: "Slovakia" },
-        { code: "+386", country: "Slovenia" },
-        { code: "+677", country: "Solomon Islands" },
-        { code: "+252", country: "Somalia" },
-        { code: "+27", country: "South Africa" },
-        { code: "+82", country: "South Korea" },
-        { code: "+211", country: "South Sudan" },
-        { code: "+34", country: "Spain" },
-        { code: "+94", country: "Sri Lanka" },
-        { code: "+249", country: "Sudan" },
-        { code: "+597", country: "Suriname" },
-        { code: "+268", country: "Eswatini" },
-        { code: "+46", country: "Sweden" },
-        { code: "+41", country: "Switzerland" },
-        { code: "+963", country: "Syria" },
-        { code: "+886", country: "Taiwan" },
-        { code: "+992", country: "Tajikistan" },
-        { code: "+255", country: "Tanzania" },
-        { code: "+66", country: "Thailand" },
-        { code: "+670", country: "Timor-Leste" },
-        { code: "+228", country: "Togo" },
-        { code: "+690", country: "Tokelau" },
-        { code: "+676", country: "Tonga" },
-        { code: "+216", country: "Tunisia" },
-        { code: "+90", country: "Turkey" },
-        { code: "+993", country: "Turkmenistan" },
-        { code: "+688", country: "Tuvalu" },
-        { code: "+256", country: "Uganda" },
-        { code: "+380", country: "Ukraine" },
-        { code: "+971", country: "United Arab Emirates" },
-        { code: "+44", country: "United Kingdom" },
-        { code: "+1", country: "United States" },
-        { code: "+598", country: "Uruguay" },
-        { code: "+998", country: "Uzbekistan" },
-        { code: "+678", country: "Vanuatu" },
-        { code: "+379", country: "Vatican City" },
-        { code: "+58", country: "Venezuela" },
-        { code: "+84", country: "Vietnam" },
-        { code: "+681", country: "Wallis and Futuna" },
-        { code: "+967", country: "Yemen" },
-        { code: "+260", country: "Zambia" },
-        { code: "+263", country: "Zimbabwe" }
+        { code: "+1", country: "United States", flag: "🇺🇸" },
+        { code: "+1", country: "Canada", flag: "🇨🇦" },
+        { code: "+44", country: "United Kingdom", flag: "🇬🇧" },
+        { code: "+61", country: "Australia", flag: "🇦🇺" },
+        { code: "+91", country: "India", flag: "🇮🇳" },
+        { code: "+86", country: "China", flag: "🇨🇳" },
+        { code: "+81", country: "Japan", flag: "🇯🇵" },
+        { code: "+82", country: "South Korea", flag: "🇰🇷" },
+        { code: "+49", country: "Germany", flag: "🇩🇪" },
+        { code: "+33", country: "France", flag: "🇫🇷" },
+        { code: "+39", country: "Italy", flag: "🇮🇹" },
+        { code: "+34", country: "Spain", flag: "🇪🇸" },
+        { code: "+7", country: "Russia", flag: "🇷🇺" },
+        { code: "+55", country: "Brazil", flag: "🇧🇷" },
+        { code: "+52", country: "Mexico", flag: "🇲🇽" },
+        { code: "+27", country: "South Africa", flag: "🇿🇦" },
+        { code: "+234", country: "Nigeria", flag: "🇳🇬" },
+        { code: "+20", country: "Egypt", flag: "🇪🇬" },
+        { code: "+971", country: "UAE", flag: "🇦🇪" },
+        { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
+        { code: "+972", country: "Israel", flag: "🇮🇱" },
+        { code: "+90", country: "Turkey", flag: "🇹🇷" },
+        { code: "+31", country: "Netherlands", flag: "🇳🇱" },
+        { code: "+32", country: "Belgium", flag: "🇧🇪" },
+        { code: "+41", country: "Switzerland", flag: "🇨🇭" },
+        { code: "+46", country: "Sweden", flag: "🇸🇪" },
+        { code: "+47", country: "Norway", flag: "🇳🇴" },
+        { code: "+45", country: "Denmark", flag: "🇩🇰" },
+        { code: "+358", country: "Finland", flag: "🇫🇮" },
+        { code: "+48", country: "Poland", flag: "🇵🇱" },
+        { code: "+420", country: "Czech Republic", flag: "🇨🇿" },
+        { code: "+36", country: "Hungary", flag: "🇭🇺" },
+        { code: "+30", country: "Greece", flag: "🇬🇷" },
+        { code: "+351", country: "Portugal", flag: "🇵🇹" },
+        { code: "+353", country: "Ireland", flag: "🇮🇪" },
+        { code: "+64", country: "New Zealand", flag: "🇳🇿" },
+        { code: "+65", country: "Singapore", flag: "🇸🇬" },
+        { code: "+60", country: "Malaysia", flag: "🇲🇾" },
+        { code: "+66", country: "Thailand", flag: "🇹🇭" },
+        { code: "+63", country: "Philippines", flag: "🇵🇭" },
+        { code: "+84", country: "Vietnam", flag: "🇻🇳" },
+        { code: "+62", country: "Indonesia", flag: "🇮🇩" },
+        { code: "+92", country: "Pakistan", flag: "🇵🇰" },
+        { code: "+94", country: "Sri Lanka", flag: "🇱🇰" },
+        { code: "+880", country: "Bangladesh", flag: "🇧🇩" },
+        { code: "+977", country: "Nepal", flag: "🇳🇵" },
+        { code: "+98", country: "Iran", flag: "🇮🇷" },
+        { code: "+964", country: "Iraq", flag: "🇮🇶" },
+        { code: "+963", country: "Syria", flag: "🇸🇾" },
+        { code: "+961", country: "Lebanon", flag: "🇱🇧" },
+        { code: "+962", country: "Jordan", flag: "🇯🇴" },
+        { code: "+255", country: "Tanzania", flag: "🇹🇿" },
+        { code: "+254", country: "Kenya", flag: "🇰🇪" },
+        { code: "+256", country: "Uganda", flag: "🇺🇬" },
+        { code: "+250", country: "Rwanda", flag: "🇷🇼" },
+        { code: "+251", country: "Ethiopia", flag: "🇪🇹" }
     ];
 }
 
-// ================= POPULATE COUNTRY CODE SELECT =================
+// ==================== POPULATE COUNTRY CODES ====================
 async function populateCountryCodes() {
-    const countryCodeSelect = document.getElementById("countryCode");
-    if (!countryCodeSelect) {
-        console.error("Country code select element not found");
-        return;
-    }
-    
-    // Clear existing options
-    countryCodeSelect.innerHTML = '<option value="" disabled selected>🌍 Select Country Code</option>';
-    
+    const countrySelect = document.getElementById('countryCode');
+    if (!countrySelect) return;
+
     try {
         const countries = await fetchCountryCodes();
         
         countries.forEach(country => {
-            const option = document.createElement("option");
+            const option = document.createElement('option');
             option.value = country.code;
             option.textContent = `${country.country} (${country.code})`;
-            countryCodeSelect.appendChild(option);
+            if (country.flag) {
+                // You can add flag emoji if available
+            }
+            countrySelect.appendChild(option);
         });
         
         console.log(`✅ Loaded ${countries.length} countries`);
     } catch (error) {
-        console.error('Error populating countries:', error);
+        console.error('Error loading countries:', error);
         
-        // Use fallback
-        const fallbackCountries = getFallbackCountryCodes();
+        // Load fallback countries
+        const fallbackCountries = getFallbackCountries();
         fallbackCountries.forEach(country => {
-            const option = document.createElement("option");
+            const option = document.createElement('option');
             option.value = country.code;
-            option.textContent = `${country.country} (${country.code})`;
-            countryCodeSelect.appendChild(option);
+            option.textContent = `${country.flag || '🌍'} ${country.country} (${country.code})`;
+            countrySelect.appendChild(option);
         });
     }
 }
 
-// Initialize country codes
-document.addEventListener('DOMContentLoaded', populateCountryCodes);
+// ==================== UI HELPER FUNCTIONS ====================
+function showMessage(text, type = 'info') {
+    const messageEl = document.getElementById('message');
+    if (!messageEl) return;
+    
+    messageEl.textContent = text;
+    messageEl.className = `message ${type}`;
+    messageEl.style.display = 'block';
+    
+    // Auto hide success messages
+    if (type === 'success') {
+        setTimeout(() => {
+            messageEl.style.display = 'none';
+        }, 3000);
+    }
+}
 
-// ================= FORM LOGIN =================
-const form = document.getElementById("loginForm");
-const message = document.getElementById("message");
+function showLoader(show) {
+    const loader = document.getElementById('loader');
+    const submitBtn = document.getElementById('submitBtn');
+    const googleBtn = document.getElementById('googleBtn');
+    
+    if (loader) loader.style.display = show ? 'flex' : 'none';
+    
+    if (submitBtn) {
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoader = submitBtn.querySelector('.btn-loader');
+        if (btnText) btnText.style.display = show ? 'none' : 'inline';
+        if (btnLoader) btnLoader.style.display = show ? 'inline-block' : 'none';
+    }
+    
+    if (googleBtn) {
+        const googleText = googleBtn.querySelector('span');
+        const googleLoader = googleBtn.querySelector('.google-loader');
+        if (googleText) googleText.style.display = show ? 'none' : 'inline';
+        if (googleLoader) googleLoader.style.display = show ? 'inline-block' : 'none';
+    }
+}
 
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = document.createElement('i');
+    icon.className = type === 'success' ? 'fas fa-check-circle' : 
+                     type === 'error' ? 'fas fa-exclamation-circle' : 
+                     'fas fa-info-circle';
+    
+    const text = document.createElement('span');
+    text.textContent = message;
+    
+    toast.appendChild(icon);
+    toast.appendChild(text);
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            container.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
+
+// ==================== FORM VALIDATION ====================
+function validateUsername(username) {
+    if (username.length < 3) return 'Username must be at least 3 characters';
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) return 'Username can only contain letters, numbers, and underscores';
+    return '';
+}
+
+function validateEmail(email) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Please enter a valid email address';
+    return '';
+}
+
+function validatePhone(phone) {
+    if (!/^\d+$/.test(phone)) return 'Phone number must contain only digits';
+    if (phone.length < 7 || phone.length > 15) return 'Phone number must be 7-15 digits';
+    return '';
+}
+
+// ==================== FORM SUBMISSION ====================
+const form = document.getElementById('loginForm');
 if (form) {
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
-
-        const username = document.getElementById("username")?.value.trim();
-        const email = document.getElementById("email")?.value.trim();
-        const countryCodeSelect = document.getElementById("countryCode");
-        const countryCode = countryCodeSelect?.value || "+1";
-        const phoneNumber = document.getElementById("phone")?.value.trim();
-        const fullPhoneNumber = countryCode + phoneNumber;
-
-        if (!username || !email || !phoneNumber) {
-            showMessage("Please fill all fields.", "error");
+        
+        const username = document.getElementById('username')?.value.trim();
+        const email = document.getElementById('email')?.value.trim();
+        const countryCode = document.getElementById('countryCode')?.value;
+        const phone = document.getElementById('phone')?.value.trim();
+        
+        // Validate inputs
+        const usernameError = validateUsername(username);
+        const emailError = validateEmail(email);
+        const phoneError = validatePhone(phone);
+        
+        if (usernameError || emailError || phoneError) {
+            if (usernameError) document.getElementById('usernameError').textContent = usernameError;
+            if (emailError) document.getElementById('emailError').textContent = emailError;
+            if (phoneError) document.getElementById('phoneError').textContent = phoneError;
             return;
         }
-
-        if (!countryCodeSelect?.value) {
-            showMessage("Please select your country code.", "error");
-            return;
-        }
-
-        // Username validation
-        if (username.length < 3) {
-            showMessage("Username must be at least 3 characters.", "error");
-            return;
-        }
-        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-            showMessage("Username can only contain letters, numbers, and underscores.", "error");
-            return;
-        }
-
-        // Email validation
-        if (!/^\S+@\S+\.\S+$/.test(email)) {
-            showMessage("Enter a valid email address.", "error");
-            return;
-        }
-
-        // Phone validation
-        if (!/^\d{7,15}$/.test(phoneNumber)) {
-            showMessage("Enter a valid phone number (7-15 digits).", "error");
-            return;
-        }
-
+        
+        const fullPhone = countryCode + phone;
+        
+        showLoader(true);
+        
         try {
-            showLoader(true);
-            
             // Check if user exists
             const usersRef = collection(db, "users");
             const q = query(usersRef, where("email", "==", email));
             const querySnapshot = await getDocs(q);
             
             if (!querySnapshot.empty) {
-                // User exists - log them in
-                const existingUser = querySnapshot.docs[0].data();
+                // Existing user - login
+                const userData = querySnapshot.docs[0].data();
                 localStorage.setItem("crunkUser", JSON.stringify({
-                    username: existingUser.displayName || existingUser.username,
-                    displayName: existingUser.displayName || existingUser.username,
-                    email: existingUser.email,
-                    phone: existingUser.phone,
-                    photoURL: existingUser.photoURL || null,
-                    userId: querySnapshot.docs[0].id
+                    uid: userData.uid,
+                    username: userData.username,
+                    displayName: userData.displayName || userData.username,
+                    email: userData.email,
+                    phone: userData.phone,
+                    photoURL: userData.photoURL || null
                 }));
                 
                 showMessage("Login successful! Redirecting...", "success");
+                showToast("Welcome back!", "success");
+                
                 setTimeout(() => {
                     window.location.href = "home.html";
                 }, 1000);
                 return;
             }
-
-            // Create new user
-            const userId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-
+            
+            // New user - register
+            const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
             const newUser = {
                 uid: userId,
                 username: username,
                 displayName: username,
                 email: email,
-                phone: fullPhoneNumber,
+                phone: fullPhone,
                 countryCode: countryCode,
-                phoneNumber: phoneNumber,
+                phoneNumber: phone,
                 photoURL: null,
-                loginMethod: "form",
+                loginMethod: 'form',
                 createdAt: new Date().toISOString(),
                 lastSeen: new Date().toISOString(),
                 status: 'online',
-                userId: userId
+                online: true
             };
-
+            
+            // Save to Firestore
             try {
                 await setDoc(doc(db, "users", userId), newUser);
-                console.log("User saved to Firestore");
-            } catch (firestoreError) {
-                console.log("Firestore unavailable, using localStorage only");
+                console.log("✅ User saved to Firestore");
+            } catch (e) {
+                console.log("⚠️ Firestore error:", e);
             }
-
-            localStorage.setItem("crunkUser", JSON.stringify({ 
+            
+            // Save to localStorage
+            localStorage.setItem("crunkUser", JSON.stringify({
+                uid: userId,
                 username: username,
                 displayName: username,
-                email: email, 
-                phone: fullPhoneNumber,
-                photoURL: null,
-                userId: userId 
+                email: email,
+                phone: fullPhone,
+                photoURL: null
             }));
-
+            
             showMessage("Registration successful! Redirecting...", "success");
+            showToast("Welcome to Crunk Games!", "success");
+            
             setTimeout(() => {
                 window.location.href = "home.html";
             }, 1000);
-
-        } catch (err) {
-            console.error("Login error:", err);
-            showMessage("Error processing login. Please try again.", "error");
+            
+        } catch (error) {
+            console.error("❌ Error:", error);
+            showMessage("An error occurred. Please try again.", "error");
+            showToast("Login failed", "error");
         } finally {
             showLoader(false);
         }
     });
 }
 
-// ================= GOOGLE LOGIN (SINGLE WORKING VERSION) =================
+// ==================== GOOGLE LOGIN ====================
 window.handleGoogleLogin = async function() {
-    console.log("🚀 Google login started");
+    console.log("🚀 Starting Google login...");
+    showLoader(true);
+    
     try {
-        showLoader(true);
-        
-        // Use popup sign-in (simpler and more reliable)
-        console.log("📢 Opening popup...");
         const result = await signInWithPopup(auth, googleProvider);
-        console.log("✅ Popup successful!", result.user.email);
+        console.log("✅ Google login successful:", result.user.email);
         
         const user = result.user;
         
-        // Save user to Firestore and localStorage
+        // Check if user exists in Firestore
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
         
@@ -469,75 +391,71 @@ window.handleGoogleLogin = async function() {
             console.log("👤 Existing user");
             const existingUser = userDoc.data();
             userData = {
-                username: existingUser.displayName || user.displayName,
+                uid: user.uid,
+                username: existingUser.username || user.displayName,
                 displayName: existingUser.displayName || user.displayName,
                 email: user.email,
-                photoURL: user.photoURL,
-                userId: user.uid
+                phone: existingUser.phone || '',
+                photoURL: user.photoURL
             };
         } else {
-            console.log("🆕 New user");
-            const newUser = {
+            console.log("🆕 New Google user");
+            userData = {
                 uid: user.uid,
                 username: user.displayName,
                 displayName: user.displayName,
                 email: user.email,
+                phone: '',
                 photoURL: user.photoURL,
-                loginMethod: "google",
+                loginMethod: 'google',
                 createdAt: new Date().toISOString(),
                 lastSeen: new Date().toISOString(),
                 status: 'online',
-                userId: user.uid
+                online: true
             };
             
-            // Try Firestore but don't fail if it doesn't work
+            // Save to Firestore
             try {
-                await setDoc(userDocRef, newUser);
-                console.log("✅ Saved to Firestore");
+                await setDoc(userDocRef, userData);
+                console.log("✅ New user saved to Firestore");
             } catch (e) {
-                console.log("⚠️ Firestore error:", e.message);
+                console.log("⚠️ Firestore error:", e);
             }
-            
-            userData = {
-                username: user.displayName,
-                displayName: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                userId: user.uid
-            };
         }
         
-        // ALWAYS save to localStorage
+        // Save to localStorage
         localStorage.setItem("crunkUser", JSON.stringify(userData));
-        console.log("💾 Saved to localStorage:", userData);
+        console.log("💾 User saved to localStorage");
         
-        // Show success message
         showMessage("Login successful! Redirecting...", "success");
+        showToast(`Welcome ${user.displayName}!`, "success");
         
-        // 🔴 CRITICAL: Force redirect to home page
-        console.log("⏰ Redirecting to home.html NOW!");
-        window.location.href = "home.html"; // Immediate redirect
+        setTimeout(() => {
+            window.location.href = "home.html";
+        }, 1000);
         
     } catch (error) {
         console.error("❌ Google login error:", error);
         
+        let errorMessage = "Login failed. ";
         if (error.code === 'auth/popup-closed-by-user') {
-            showMessage("Login cancelled. Please try again.", "info");
+            errorMessage = "Login cancelled. Please try again.";
         } else if (error.code === 'auth/popup-blocked') {
-            showMessage("Popup was blocked. Please allow popups.", "error");
+            errorMessage = "Popup was blocked. Please allow popups.";
         } else if (error.code === 'auth/unauthorized-domain') {
-            const domain = window.location.hostname;
-            showMessage(`Please add "${domain}" to Firebase authorized domains.`, "error");
-            console.log(`❌ Add this domain to Firebase: ${domain}`);
+            errorMessage = `Please add ${window.location.hostname} to Firebase authorized domains.`;
         } else {
-            showMessage("Login failed: " + error.message, "error");
+            errorMessage += error.message;
         }
+        
+        showMessage(errorMessage, "error");
+        showToast("Google login failed", "error");
     } finally {
         showLoader(false);
     }
 };
 
-// ================= HANDLE REDIRECT RESULT =================
+// ==================== HANDLE REDIRECT RESULT ====================
 async function handleRedirectResult() {
     try {
         const result = await getRedirectResult(auth);
@@ -545,29 +463,13 @@ async function handleRedirectResult() {
             console.log("🔄 Redirect result found");
             const user = result.user;
             
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-            
-            let userData;
-            
-            if (userDoc.exists()) {
-                const existingUser = userDoc.data();
-                userData = {
-                    username: existingUser.displayName || user.displayName,
-                    displayName: existingUser.displayName || user.displayName,
-                    email: user.email,
-                    photoURL: user.photoURL,
-                    userId: user.uid
-                };
-            } else {
-                userData = {
-                    username: user.displayName,
-                    displayName: user.displayName,
-                    email: user.email,
-                    photoURL: user.photoURL,
-                    userId: user.uid
-                };
-            }
+            const userData = {
+                uid: user.uid,
+                username: user.displayName,
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL
+            };
             
             localStorage.setItem("crunkUser", JSON.stringify(userData));
             window.location.href = "home.html";
@@ -577,89 +479,49 @@ async function handleRedirectResult() {
     }
 }
 
-// Call this on page load
-handleRedirectResult();
-
-// ================= HELPER FUNCTIONS =================
-function showMessage(text, type = "info") {
-    if (!message) return;
-    
-    message.innerText = text;
-    message.className = `message ${type}`;
-    message.style.display = 'block';
-    
-    if (type === "success") {
-        setTimeout(() => {
-            message.innerText = "";
-            message.className = "message";
-            message.style.display = 'none';
-        }, 3000);
+// ==================== AUTH STATE CHANGE ====================
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        console.log("👤 Auth state: User is signed in:", user.email);
+    } else {
+        console.log("👤 Auth state: User is signed out");
     }
-}
+});
 
-function showLoader(show) {
-    const loader = document.getElementById("loader");
-    if (loader) {
-        loader.style.display = show ? "flex" : "none";
+// ==================== REAL-TIME VALIDATION ====================
+document.getElementById('username')?.addEventListener('input', (e) => {
+    const error = validateUsername(e.target.value);
+    document.getElementById('usernameError').textContent = error;
+});
+
+document.getElementById('email')?.addEventListener('input', (e) => {
+    const error = validateEmail(e.target.value);
+    document.getElementById('emailError').textContent = error;
+});
+
+document.getElementById('phone')?.addEventListener('input', (e) => {
+    const error = validatePhone(e.target.value);
+    document.getElementById('phoneError').textContent = error;
+});
+
+// ==================== INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("📱 Page loaded, initializing...");
+    
+    // Populate country codes
+    await populateCountryCodes();
+    
+    // Check for redirect result
+    await handleRedirectResult();
+    
+    // Add animation to container
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.opacity = '1';
     }
-}
+    
+    console.log("✅ Login system ready!");
+});
 
-// ================= VALIDATION =================
-const usernameInput = document.getElementById("username");
-if (usernameInput) {
-    usernameInput.addEventListener("input", (e) => {
-        const value = e.target.value;
-        const errorSpan = document.getElementById("usernameError");
-        if (errorSpan) {
-            if (value.length < 3 && value.length > 0) {
-                errorSpan.textContent = "Username too short";
-                errorSpan.style.display = 'block';
-            } else if (!/^[a-zA-Z0-9_]+$/.test(value) && value.length > 0) {
-                errorSpan.textContent = "Only letters, numbers, _";
-                errorSpan.style.display = 'block';
-            } else {
-                errorSpan.textContent = "";
-                errorSpan.style.display = 'none';
-            }
-        }
-    });
-}
-
-const emailInput = document.getElementById("email");
-if (emailInput) {
-    emailInput.addEventListener("input", (e) => {
-        const value = e.target.value;
-        const errorSpan = document.getElementById("emailError");
-        if (errorSpan) {
-            if (!/^\S+@\S+\.\S+$/.test(value) && value.length > 0) {
-                errorSpan.textContent = "Invalid email format";
-                errorSpan.style.display = 'block';
-            } else {
-                errorSpan.textContent = "";
-                errorSpan.style.display = 'none';
-            }
-        }
-    });
-}
-
-const phoneInput = document.getElementById("phone");
-if (phoneInput) {
-    phoneInput.addEventListener("input", (e) => {
-        const value = e.target.value;
-        const errorSpan = document.getElementById("phoneError");
-        if (errorSpan) {
-            if (!/^\d*$/.test(value) && value.length > 0) {
-                errorSpan.textContent = "Only numbers allowed";
-                errorSpan.style.display = 'block';
-            } else if (value.length > 0 && (value.length < 7 || value.length > 15)) {
-                errorSpan.textContent = "Phone must be 7-15 digits";
-                errorSpan.style.display = 'block';
-            } else {
-                errorSpan.textContent = "";
-                errorSpan.style.display = 'none';
-            }
-        }
-    });
-}
-
-console.log("✅ Login system initialized with correct Firebase project");
+// ==================== EXPORT FOR MODULE ====================
+export { auth, db };

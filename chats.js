@@ -22,7 +22,568 @@ import {
     serverTimestamp,
     getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+// Add this at the top of your chat.js after imports
 
+// ================= VENOCYBER AI INTEGRATION =================
+// Load Venocyber AI
+const venocyberScript = document.createElement('script');
+venocyberScript.src = 'venocyber-api.js';
+document.head.appendChild(venocyberScript);
+
+// AI Chat state
+let aiMessages = [];
+let aiMessagesUnsubscribe = null;
+
+// ================= MODIFIED SEND MESSAGE FUNCTION =================
+async function sendMessage() {
+    const content = msgInput ? msgInput.value.trim() : '';
+    if (!content) return;
+    
+    // Check if it's an AI command
+    if (content.startsWith('#ven ')) {
+        const aiQuestion = content.substring(5).trim();
+        await sendToVenocyber(aiQuestion);
+        msgInput.value = '';
+        return;
+    }
+    
+    if (!currentChatId) {
+        showToast('No active chat', 'error');
+        return;
+    }
+    
+    const message = {
+        senderId: currentUser.uid,
+        type: 'text',
+        content: content,
+        timestamp: serverTimestamp(),
+        status: 'sent',
+        replyTo: replyingTo ? replyingTo.content : null
+    };
+    
+    try {
+        await addDoc(collection(db, 'chats', currentChatId, 'messages'), message);
+        
+        const chatRef = doc(db, 'chats', currentChatId);
+        await updateDoc(chatRef, {
+            lastMessage: message,
+            lastMessageTime: serverTimestamp()
+        });
+        
+        msgInput.value = '';
+        clearReply();
+        
+        if (micBtn && sendBtn) {
+            micBtn.classList.remove('hidden');
+            sendBtn.classList.add('hidden');
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        showToast('Failed to send message', 'error');
+    }
+}
+
+// ================= SEND TO VENOCYBER AI =================
+async function sendToVenocyber(question) {
+    if (!question) return;
+    
+    // Show user message in chat
+    const userMessageEl = createAIMessage(question, 'user');
+    document.getElementById('ai-messages').appendChild(userMessageEl);
+    
+    // Save to local storage
+    saveAIMessage(question, 'user');
+    
+    // Show typing indicator
+    showAITyping(true);
+    
+    try {
+        // Wait for Venocyber to be loaded
+        if (!window.venocyber) {
+            await new Promise(resolve => {
+                const checkVenocyber = setInterval(() => {
+                    if (window.venocyber) {
+                        clearInterval(checkVenocyber);
+                        resolve();
+                    }
+                }, 100);
+            });
+        }
+        
+        // Get AI response
+        const response = await window.venocyber.chat(question);
+        
+        // Hide typing indicator
+        showAITyping(false);
+        
+        // Show AI response
+        const aiMessageEl = createAIMessage(response, 'ai');
+        document.getElementById('ai-messages').appendChild(aiMessageEl);
+        
+        // Save to local storage
+        saveAIMessage(response, 'ai');
+        
+        // Scroll to bottom
+        const aiMessages = document.getElementById('ai-messages');
+        aiMessages.scrollTop = aiMessages.scrollHeight;
+        
+    } catch (error) {
+        console.error('AI Error:', error);
+        showAITyping(false);
+        showToast('Failed to get AI response', 'error');
+    }
+}
+
+// ================= CREATE AI MESSAGE ELEMENT =================
+function createAIMessage(content, sender) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender === 'ai' ? 'ai-message' : 'user-message'}`;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = content;
+    
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    messageDiv.appendChild(contentDiv);
+    messageDiv.appendChild(timeDiv);
+    
+    return messageDiv;
+}
+
+// ================= SHOW AI TYPING INDICATOR =================
+function showAITyping(show) {
+    const aiMessages = document.getElementById('ai-messages');
+    if (!aiMessages) return;
+    
+    let typingIndicator = document.getElementById('ai-typing');
+    
+    if (show) {
+        if (!typingIndicator) {
+            typingIndicator = document.createElement('div');
+            typingIndicator.id = 'ai-typing';
+            typingIndicator.className = 'message ai-message typing';
+            typingIndicator.innerHTML = `
+                <div class="message-content">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            `;
+            aiMessages.appendChild(typingIndicator);
+        }
+    } else {
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+}
+
+// ================= SAVE AI MESSAGE TO LOCAL STORAGE =================
+function saveAIMessage(content, sender) {
+    aiMessages.push({
+        content,
+        sender,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Keep only last 50 messages
+    if (aiMessages.length > 50) {
+        aiMessages = aiMessages.slice(-50);
+    }
+    
+    localStorage.setItem('aiMessages', JSON.stringify(aiMessages));
+}
+
+// ================= LOAD AI MESSAGES =================
+function loadAIMessages() {
+    const saved = localStorage.getItem('aiMessages');
+    if (saved) {
+        aiMessages = JSON.parse(saved);
+        
+        const aiMessagesContainer = document.getElementById('ai-messages');
+        aiMessagesContainer.innerHTML = '';
+        
+        aiMessages.forEach(msg => {
+            const el = createAIMessage(msg.content, msg.sender);
+            aiMessagesContainer.appendChild(el);
+        });
+    }
+}
+
+// ================= CLEAR AI CHAT =================
+function clearAIChat() {
+    aiMessages = [];
+    localStorage.removeItem('aiMessages');
+    
+    const aiMessagesContainer = document.getElementById('ai-messages');
+    aiMessagesContainer.innerHTML = `
+        <div class="message ai-message">
+            <div class="message-content">
+                Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?
+            </div>
+            <div class="message-time">Just now</div>
+        </div>
+    `;
+    
+    showToast('AI chat cleared', 'success');
+}
+
+// ================= MENU FUNCTIONS =================
+function showMenu() {
+    const menuModal = document.getElementById('menu-modal');
+    const menuProfilePic = document.getElementById('menu-profile-pic');
+    const menuUserName = document.getElementById('menu-user-name');
+    const menuUserEmail = document.getElementById('menu-user-email');
+    
+    if (currentUser) {
+        menuProfilePic.src = currentUser.photoURL || 'https://via.placeholder.com/80';
+        menuUserName.textContent = currentUser.displayName;
+        menuUserEmail.textContent = currentUser.email;
+    }
+    
+    menuModal.classList.remove('hidden');
+}
+
+function showProfile() {
+    closeModals();
+    
+    const profileModal = document.getElementById('profile-modal');
+    const profilePic = document.getElementById('profile-modal-pic');
+    const profileName = document.getElementById('profile-modal-name');
+    const profileEmail = document.getElementById('profile-modal-email');
+    const profilePhone = document.getElementById('profile-modal-phone');
+    const profileJoined = document.getElementById('profile-modal-joined');
+    
+    if (currentUser) {
+        profilePic.src = currentUser.photoURL || 'https://via.placeholder.com/100';
+        profileName.textContent = currentUser.displayName;
+        profileEmail.textContent = currentUser.email;
+        
+        // Get phone from localStorage if available
+        const savedUser = JSON.parse(localStorage.getItem('crunkUser') || '{}');
+        if (savedUser.phone) {
+            profilePhone.textContent = savedUser.phone;
+        }
+        
+        // Format join date
+        if (currentUser.metadata?.createdAt) {
+            const joined = new Date(currentUser.metadata.createdAt);
+            profileJoined.textContent = `Joined ${joined.toLocaleDateString()}`;
+        }
+    }
+    
+    profileModal.classList.remove('hidden');
+}
+
+function closeModals() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.add('hidden');
+    });
+}
+
+function toggleTheme() {
+    document.body.classList.toggle('light-theme');
+    const isLight = document.body.classList.contains('light-theme');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    showToast(`Theme switched to ${isLight ? 'light' : 'dark'} mode`, 'success');
+}
+
+function shareApp() {
+    const shareText = `Join me on Crunk Chat! 🎮\nChat with friends and use Venocyber-MD AI created by rajola!`;
+    const shareUrl = window.location.origin;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Crunk Chat',
+            text: shareText,
+            url: shareUrl
+        }).catch(() => {
+            copyToClipboard(shareUrl);
+        });
+    } else {
+        copyToClipboard(shareUrl);
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Link copied to clipboard!', 'success');
+    }).catch(() => {
+        showToast('Failed to copy link', 'error');
+    });
+}
+
+function openSettings() {
+    showToast('Settings coming soon!', 'info');
+    closeModals();
+}
+
+// ================= GROUP FUNCTIONS =================
+async function loadGroups() {
+    if (!currentUser) return;
+    
+    const groupsRef = collection(db, 'groups');
+    const q = query(groupsRef, where('members', 'array-contains', currentUser.uid));
+    
+    onSnapshot(q, (snapshot) => {
+        const groups = [];
+        snapshot.forEach(doc => {
+            groups.push({ id: doc.id, ...doc.data() });
+        });
+        renderGroups(groups);
+    });
+}
+
+function renderGroups(groups) {
+    const groupsList = document.getElementById('groups-list');
+    const emptyGroups = document.getElementById('empty-groups');
+    
+    if (groups.length === 0) {
+        groupsList.innerHTML = '';
+        emptyGroups.style.display = 'flex';
+        return;
+    }
+    
+    emptyGroups.style.display = 'none';
+    groupsList.innerHTML = '';
+    
+    groups.forEach(group => {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'group-item';
+        groupEl.onclick = () => openGroupChat(group);
+        groupEl.innerHTML = `
+            <div class="group-avatar">
+                ${group.photoURL ? `<img src="${group.photoURL}" alt="${group.name}">` : 
+                  `<i class="fas fa-users"></i>`}
+            </div>
+            <div class="group-info">
+                <div class="group-name">${group.name}</div>
+                <div class="group-members">${group.members.length} members</div>
+                <div class="group-last-message">${group.lastMessage?.content || 'No messages yet'}</div>
+            </div>
+        `;
+        groupsList.appendChild(groupEl);
+    });
+}
+
+function showCreateGroupModal() {
+    const modal = document.getElementById('group-modal');
+    const memberSelection = document.getElementById('member-selection');
+    
+    // Populate members
+    memberSelection.innerHTML = '';
+    allUsers.forEach(user => {
+        const memberEl = document.createElement('div');
+        memberEl.className = 'member-item';
+        memberEl.innerHTML = `
+            <input type="checkbox" value="${user.uid}" id="member-${user.uid}">
+            <img src="${user.photoURL || 'https://via.placeholder.com/32'}" alt="${user.displayName}">
+            <div class="member-info">
+                <div class="member-name">${user.displayName}</div>
+                <div class="member-status">${onlineUsers.has(user.uid) ? 'Online' : 'Offline'}</div>
+            </div>
+        `;
+        memberSelection.appendChild(memberEl);
+    });
+    
+    modal.classList.remove('hidden');
+}
+
+async function createGroup() {
+    const groupName = document.getElementById('group-name').value.trim();
+    const groupImage = document.getElementById('group-image').files[0];
+    const selectedMembers = [];
+    
+    document.querySelectorAll('#member-selection input:checked').forEach(cb => {
+        selectedMembers.push(cb.value);
+    });
+    
+    if (!groupName) {
+        showToast('Please enter a group name', 'error');
+        return;
+    }
+    
+    if (selectedMembers.length === 0) {
+        showToast('Please select at least one member', 'error');
+        return;
+    }
+    
+    // Add current user
+    selectedMembers.push(currentUser.uid);
+    
+    showLoading(true);
+    
+    try {
+        let groupPhotoURL = null;
+        
+        // Upload group image if provided
+        if (groupImage && supabase) {
+            const fileExt = groupImage.name.split('.').pop();
+            const fileName = `groups/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+            
+            const { data, error } = await supabase.storage
+                .from('group-images')
+                .upload(fileName, groupImage);
+                
+            if (!error) {
+                const { data: { publicUrl } } = supabase.storage
+                    .from('group-images')
+                    .getPublicUrl(fileName);
+                groupPhotoURL = publicUrl;
+            }
+        }
+        
+        // Create group in Firestore
+        const groupRef = await addDoc(collection(db, 'groups'), {
+            name: groupName,
+            photoURL: groupPhotoURL,
+            members: selectedMembers,
+            createdBy: currentUser.uid,
+            createdAt: serverTimestamp(),
+            lastMessage: null,
+            lastMessageTime: serverTimestamp()
+        });
+        
+        // Create initial group chat
+        await addDoc(collection(db, 'chats'), {
+            type: 'group',
+            groupId: groupRef.id,
+            groupName: groupName,
+            groupPhotoURL: groupPhotoURL,
+            participants: selectedMembers,
+            createdAt: serverTimestamp(),
+            lastMessage: null,
+            lastMessageTime: serverTimestamp()
+        });
+        
+        showToast('Group created successfully!', 'success');
+        closeModals();
+        
+        // Switch to groups tab
+        switchTab('groups');
+        
+    } catch (error) {
+        console.error('Error creating group:', error);
+        showToast('Failed to create group', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ================= EVENT LISTENERS =================
+// Add these to your existing event listeners
+
+// Menu toggle
+document.getElementById('menu-toggle')?.addEventListener('click', showMenu);
+
+// Close modals when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        closeModals();
+    }
+});
+
+// AI Tab
+document.getElementById('tab-ai')?.addEventListener('click', () => {
+    document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-ai').classList.add('active');
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById('ai-view').classList.add('active');
+    loadAIMessages();
+});
+
+// AI Send
+document.getElementById('ai-send-btn')?.addEventListener('click', () => {
+    const input = document.getElementById('ai-input');
+    const message = input.value.trim();
+    if (message) {
+        sendToVenocyber(message);
+        input.value = '';
+    }
+});
+
+document.getElementById('ai-input')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const input = document.getElementById('ai-input');
+        const message = input.value.trim();
+        if (message) {
+            sendToVenocyber(message);
+            input.value = '';
+        }
+    }
+});
+
+// Clear AI chat
+document.getElementById('clear-ai-chat')?.addEventListener('click', clearAIChat);
+
+// Groups tab
+document.getElementById('tab-groups')?.addEventListener('click', () => {
+    document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-groups').classList.add('active');
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById('groups-view').classList.add('active');
+    loadGroups();
+});
+
+// Create group button
+document.getElementById('create-group-btn')?.addEventListener('click', showCreateGroupModal);
+
+// Online/All filter
+document.querySelectorAll('.filter-option').forEach(option => {
+    option.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-option').forEach(el => el.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        const filter = e.target.dataset.filter;
+        if (filter === 'online') {
+            const onlineUsersList = allUsers.filter(user => onlineUsers.has(user.uid));
+            renderContacts(onlineUsersList);
+        } else {
+            renderContacts(allUsers);
+        }
+    });
+});
+
+// ================= UPDATE PROFILE PICTURE =================
+// Add this to your onAuthStateChanged
+function updateProfileUI() {
+    if (currentUser && headerProfilePic) {
+        headerProfilePic.src = currentUser.photoURL || 'https://via.placeholder.com/32';
+    }
+}
+
+// ================= LOAD THEME =================
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+}
+
+// ================= EXPOSE FUNCTIONS GLOBALLY =================
+window.switchTab = function(tab) {
+    const tabs = {
+        'chats': 'tab-chats',
+        'contacts': 'tab-contacts',
+        'groups': 'tab-groups',
+        'ai': 'tab-ai'
+    };
+    
+    if (tabs[tab]) {
+        document.getElementById(tabs[tab])?.click();
+    }
+};
+
+window.showProfile = showProfile;
+window.toggleTheme = toggleTheme;
+window.shareApp = shareApp;
+window.openSettings = openSettings;
+window.closeModals = closeModals;
+window.logout = logout;
+window.createGroup = createGroup;
+
+console.log('✅ Venocyber-MD AI integrated successfully!');
 // ================= FIREBASE CONFIG =================
 // ================= FIREBASE CONFIG =================
 const firebaseConfig = {

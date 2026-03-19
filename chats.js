@@ -1008,3 +1008,33 @@ window.logout = async function() {
         showToast('Failed to logout', 'error');
     }
 };
+// Add this to your chatting app
+async function chatWithVenocyber(message) {
+    try {
+        const response = await fetch('http://localhost:3000/api/venocyber/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message })
+        });
+        
+        const data = await response.json();
+        return data.response;
+    } catch (error) {
+        console.error('Error:', error);
+        return "Sorry, I'm having trouble connecting. Please try again!";
+    }
+}
+
+// Modify your existing message handler
+async function onMessageSend(message) {
+    // Display user message
+    addMessageToChat('user', message);
+    
+    // Get bot response
+    const botResponse = await chatWithVenocyber(message);
+    
+    // Display bot message
+    addMessageToChat('bot', botResponse);
+}

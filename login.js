@@ -3,7 +3,7 @@
     const savedUser = localStorage.getItem("crunkUser");
     if (savedUser) {
         console.log("✅ User already logged in, redirecting to home...");
-        window.location.replace("home.html");
+        window.location.replace("chats.html");
     }
 })();
 
@@ -431,7 +431,7 @@ window.handleGoogleLogin = async function() {
         showToast(`Welcome ${user.displayName}!`, "success");
         
         setTimeout(() => {
-            window.location.href = "home.html";
+            window.location.href = "chats.html";
         }, 1000);
         
     } catch (error) {

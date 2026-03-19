@@ -1,4 +1,6 @@
-// chat.js - Complete Working Chat Application
+// chat.js - Complete Working Chat Application with All Fixes
+// Created by rajola
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { 
     getAuth, 
@@ -42,6 +44,7 @@ const db = getFirestore(app);
 let currentUser = null;
 let currentChatUser = null;
 let currentChatId = null;
+let currentChatType = 'private'; // 'private' or 'group'
 let messagesUnsubscribe = null;
 let usersUnsubscribe = null;
 let chatsUnsubscribe = null;
@@ -59,8 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeApp() {
     console.log('🔄 Initializing app...');
     
-    // Get all DOM elements
+    // Get all DOM elements with error checking
     const elements = {
+        // Header elements
         menuToggle: document.getElementById('menu-toggle'),
         menuModal: document.getElementById('menu-modal'),
         headerProfilePic: document.getElementById('header-profile-pic'),
@@ -69,6 +73,7 @@ function initializeApp() {
         globalSearch: document.getElementById('global-search'),
         clearSearch: document.getElementById('clear-search'),
         
+        // Tabs
         tabChats: document.getElementById('tab-chats'),
         tabContacts: document.getElementById('tab-contacts'),
         tabGroups: document.getElementById('tab-groups'),
@@ -78,11 +83,13 @@ function initializeApp() {
         groupsView: document.getElementById('groups-view'),
         aiView: document.getElementById('ai-view'),
         
+        // Lists
         userList: document.getElementById('user-list'),
         recentChatsList: document.getElementById('recent-chats-list'),
         groupsList: document.getElementById('groups-list'),
         aiMessages: document.getElementById('ai-messages'),
         
+        // Chat screen elements
         backBtn: document.getElementById('back-btn'),
         chatScreen: document.getElementById('chat-screen'),
         homeScreen: document.getElementById('home-screen'),
@@ -98,32 +105,42 @@ function initializeApp() {
         attachBtn: document.getElementById('attach-btn'),
         imageUpload: document.getElementById('image-upload'),
         
+        // AI elements
         aiInput: document.getElementById('ai-input'),
         aiSendBtn: document.getElementById('ai-send-btn'),
         clearAiChat: document.getElementById('clear-ai-chat'),
         
+        // Buttons
         inviteBtn: document.getElementById('invite-btn'),
         createGroupBtn: document.getElementById('create-group-btn'),
         
+        // Empty states
         emptyChats: document.getElementById('empty-chats'),
         emptyGroups: document.getElementById('empty-groups'),
         
+        // Toast and loading
         toastContainer: document.getElementById('toast-container'),
         loadingOverlay: document.getElementById('loading-overlay'),
         
+        // Menu items
         menuProfile: document.getElementById('menu-profile'),
         menuTheme: document.getElementById('menu-theme'),
         menuShare: document.getElementById('menu-share'),
         menuSettings: document.getElementById('menu-settings'),
         menuLogout: document.getElementById('menu-logout'),
         
+        // Modal buttons
         closeProfileModal: document.getElementById('close-profile-modal'),
         cancelGroup: document.getElementById('cancel-group'),
         createGroup: document.getElementById('create-group'),
         closeImageModal: document.getElementById('close-image-modal')
     };
 
-    console.log('📋 DOM elements found');
+    // Log which elements were found
+    const foundElements = Object.entries(elements)
+        .filter(([_, value]) => value !== null)
+        .map(([key]) => key);
+    console.log(`📋 Found ${foundElements.length} DOM elements`);
 
     // ================= CHECK LOGIN =================
     onAuthStateChanged(auth, async (user) => {
@@ -133,25 +150,34 @@ function initializeApp() {
             currentUser = {
                 uid: user.uid,
                 displayName: user.displayName || 'User',
-                email: user.email,
-                photoURL: user.photoURL || 'https://via.placeholder.com/100'
+                email: user.email || '',
+                photoURL: user.photoURL || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%2334d399\'/%3E%3Ctext x=\'50\' y=\'70\' text-anchor=\'middle\' fill=\'white\' font-size=\'50\' font-family=\'Arial\'%3E👤%3C/text%3E%3C/svg%3E'
             };
             
             console.log('👤 Current user:', currentUser.displayName);
             
+            // Save to localStorage
             localStorage.setItem('crunkUser', JSON.stringify(currentUser));
             
+            // Update profile picture
             if (elements.headerProfilePic) {
                 elements.headerProfilePic.src = currentUser.photoURL;
             }
             
+            // Save to Firestore
             await saveUserToFirestore(currentUser);
             
+            // Load data
             loadUsers(elements);
             loadRecentChats(elements);
             loadGroups(elements);
             loadAIChatHistory(elements);
             setupPresence();
+            
+            // Show welcome message in AI if empty
+            if (elements.aiMessages && elements.aiMessages.children.length === 0) {
+                addAIMessage(elements, "Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?", 'ai');
+            }
             
         } else {
             console.log('❌ No user, redirecting to login');
@@ -187,7 +213,7 @@ function initializeApp() {
         }
     });
 
-    // Menu items
+    // Menu items event listeners
     if (elements.menuProfile) {
         elements.menuProfile.addEventListener('click', () => showProfile(elements));
     }
@@ -211,7 +237,8 @@ function initializeApp() {
     // Close profile modal
     if (elements.closeProfileModal) {
         elements.closeProfileModal.addEventListener('click', () => {
-            document.getElementById('profile-modal').classList.add('hidden');
+            const modal = document.getElementById('profile-modal');
+            if (modal) modal.classList.add('hidden');
         });
     }
 
@@ -317,7 +344,12 @@ function initializeApp() {
         elements.backBtn.addEventListener('click', () => {
             elements.chatScreen.classList.remove('active');
             elements.homeScreen.classList.add('active');
-            if (messagesUnsubscribe) messagesUnsubscribe();
+            if (messagesUnsubscribe) {
+                messagesUnsubscribe();
+                messagesUnsubscribe = null;
+            }
+            currentChatId = null;
+            currentChatUser = null;
         });
     }
 
@@ -348,7 +380,8 @@ function initializeApp() {
 
     if (elements.cancelGroup) {
         elements.cancelGroup.addEventListener('click', () => {
-            document.getElementById('group-modal').classList.add('hidden');
+            const modal = document.getElementById('group-modal');
+            if (modal) modal.classList.add('hidden');
         });
     }
 
@@ -412,7 +445,8 @@ function initializeApp() {
     // ================= IMAGE MODAL =================
     if (elements.closeImageModal) {
         elements.closeImageModal.addEventListener('click', () => {
-            document.getElementById('image-modal').classList.add('hidden');
+            const modal = document.getElementById('image-modal');
+            if (modal) modal.classList.add('hidden');
         });
     }
 
@@ -423,6 +457,8 @@ function initializeApp() {
         if (elements.menuTheme) {
             const icon = elements.menuTheme.querySelector('i');
             if (icon) icon.className = 'fas fa-sun';
+            const span = elements.menuTheme.querySelector('span');
+            if (span) span.textContent = 'Light Mode';
         }
     }
 
@@ -440,6 +476,7 @@ function showToast(elements, message, type = 'info') {
     let icon = 'fa-info-circle';
     if (type === 'success') icon = 'fa-check-circle';
     if (type === 'error') icon = 'fa-exclamation-circle';
+    if (type === 'warning') icon = 'fa-exclamation-triangle';
     
     toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
     elements.toastContainer.appendChild(toast);
@@ -612,6 +649,8 @@ function setupPresence() {
                 }
             }
         });
+        // Update UI when online status changes
+        renderContacts(elements, allUsers);
     });
 }
 
@@ -655,7 +694,7 @@ function renderContacts(elements, users) {
         contactEl.setAttribute('data-userid', user.uid);
         contactEl.onclick = () => openChat(elements, user);
         contactEl.innerHTML = `
-            <img src="${user.photoURL || 'https://via.placeholder.com/56'}" 
+            <img src="${user.photoURL || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'56\' height=\'56\' viewBox=\'0 0 56 56\'%3E%3Ccircle cx=\'28\' cy=\'28\' r=\'28\' fill=\'%2334d399\'/%3E%3Ctext x=\'28\' y=\'40\' text-anchor=\'middle\' fill=\'white\' font-size=\'28\' font-family=\'Arial\'%3E👤%3C/text%3E%3C/svg%3E'}" 
                  alt="${user.displayName}" 
                  class="contact-avatar ${isOnline ? 'online' : ''}">
             <div class="contact-info">
@@ -712,13 +751,15 @@ function loadRecentChats(elements) {
             
             const isOnline = onlineUsers.has(otherUserId);
             const lastMessageTime = chat.lastMessageTime?.toDate ? chat.lastMessageTime.toDate() : new Date();
+            const lastMessage = chat.lastMessage?.content || 'No messages yet';
+            const lastMessagePreview = lastMessage.length > 30 ? lastMessage.substring(0, 30) + '...' : lastMessage;
             
             const chatEl = document.createElement('div');
             chatEl.className = 'chat-item';
             chatEl.setAttribute('data-chatid', chat.id);
             chatEl.onclick = () => openChat(elements, otherUser, chat.id);
             chatEl.innerHTML = `
-                <img src="${otherUser.photoURL || 'https://via.placeholder.com/56'}" 
+                <img src="${otherUser.photoURL || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'56\' height=\'56\' viewBox=\'0 0 56 56\'%3E%3Ccircle cx=\'28\' cy=\'28\' r=\'28\' fill=\'%2334d399\'/%3E%3Ctext x=\'28\' y=\'40\' text-anchor=\'middle\' fill=\'white\' font-size=\'28\' font-family=\'Arial\'%3E👤%3C/text%3E%3C/svg%3E'}" 
                      alt="${otherUser.displayName}" 
                      class="chat-avatar ${isOnline ? 'online' : ''}">
                 <div class="chat-info">
@@ -727,7 +768,7 @@ function loadRecentChats(elements) {
                         ${isOnline ? '<span class="status-indicator online"></span>' : ''}
                     </div>
                     <div class="chat-last-message">
-                        ${chat.lastMessage?.type === 'text' ? (chat.lastMessage.content || '').substring(0, 30) + '...' : '📷 Image'}
+                        ${lastMessagePreview}
                     </div>
                 </div>
                 <div class="chat-time">${formatTime(lastMessageTime)}</div>
@@ -744,8 +785,11 @@ async function openChat(elements, user, existingChatId = null) {
     if (!currentUser || !user) return;
     
     currentChatUser = user;
+    currentChatType = 'private';
     
-    if (elements.chatAvatar) elements.chatAvatar.src = user.photoURL || 'https://via.placeholder.com/56';
+    if (elements.chatAvatar) {
+        elements.chatAvatar.src = user.photoURL || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'44\' height=\'44\' viewBox=\'0 0 44 44\'%3E%3Ccircle cx=\'22\' cy=\'22\' r=\'22\' fill=\'%2334d399\'/%3E%3Ctext x=\'22\' y=\'30\' text-anchor=\'middle\' fill=\'white\' font-size=\'22\' font-family=\'Arial\'%3E👤%3C/text%3E%3C/svg%3E';
+    }
     if (elements.chatWithName) elements.chatWithName.textContent = user.displayName;
     
     const isOnline = onlineUsers.has(user.uid);
@@ -813,6 +857,7 @@ function loadMessages(elements, chatId) {
             messages.push({ id: doc.id, ...doc.data() });
         });
         renderMessages(elements, messages);
+        scrollToBottom(elements.messageBox);
     });
 }
 
@@ -826,8 +871,20 @@ function renderMessages(elements, messages) {
         return;
     }
     
+    let lastDate = null;
+    
     messages.forEach((message) => {
         const messageDate = message.timestamp?.toDate ? message.timestamp.toDate() : new Date();
+        const messageDay = messageDate.toDateString();
+        
+        // Add date separator if new day
+        if (messageDay !== lastDate) {
+            const dateSeparator = document.createElement('div');
+            dateSeparator.className = 'date-separator';
+            dateSeparator.innerHTML = `<span>${formatDate(messageDate)}</span>`;
+            elements.messageBox.appendChild(dateSeparator);
+            lastDate = messageDay;
+        }
         
         const messageEl = document.createElement('div');
         messageEl.className = `message ${message.senderId === currentUser.uid ? 'sent' : 'received'}`;
@@ -844,7 +901,7 @@ function renderMessages(elements, messages) {
         } else if (message.type === 'image') {
             messageEl.innerHTML = `
                 <div class="message-content">
-                    <img src="${message.url}" class="message-image" onclick='openImageModal("${message.url}")' style="max-width: 200px; max-height: 200px; border-radius: 8px; cursor: pointer;">
+                    <img src="${message.url}" class="message-image" onclick='window.openImageModal("${message.url}")' style="max-width: 200px; max-height: 200px; border-radius: 8px; cursor: pointer;">
                 </div>
                 <div class="message-info">
                     <span class="message-time">${formatTime(messageDate)}</span>
@@ -854,8 +911,12 @@ function renderMessages(elements, messages) {
         
         elements.messageBox.appendChild(messageEl);
     });
-    
-    elements.messageBox.scrollTop = elements.messageBox.scrollHeight;
+}
+
+function scrollToBottom(element) {
+    if (element) {
+        element.scrollTop = element.scrollHeight;
+    }
 }
 
 // ================= SEND MESSAGE =================
@@ -864,6 +925,7 @@ async function sendMessage(elements) {
     const content = elements.msgInput ? elements.msgInput.value.trim() : '';
     if (!content) return;
     
+    // Check for AI command
     if (content.startsWith('#ven ')) {
         const aiQuestion = content.substring(5).trim();
         await sendToVenocyber(elements, aiQuestion);
@@ -927,7 +989,9 @@ async function sendToVenocyber(elements, message) {
     showAITyping(elements, true);
     
     try {
+        // Wait for Venocyber to be loaded
         if (!window.venocyber) {
+            console.log('⏳ Waiting for Venocyber to load...');
             await new Promise(resolve => {
                 const checkInterval = setInterval(() => {
                     if (window.venocyber) {
@@ -938,7 +1002,7 @@ async function sendToVenocyber(elements, message) {
                 setTimeout(() => {
                     clearInterval(checkInterval);
                     resolve();
-                }, 5000);
+                }, 3000);
             });
         }
         
@@ -961,14 +1025,17 @@ async function sendToVenocyber(elements, message) {
 
 function getFallbackResponse(message) {
     const msg = message.toLowerCase();
-    if (msg.includes('hello') || msg.includes('hi')) {
+    if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
         return "Hello! I'm Venocyber-MD, created by rajola. How can I help? 👋";
     }
-    if (msg.includes('who are you')) {
+    if (msg.includes('who are you') || msg.includes('your name')) {
         return "I'm Venocyber-MD, an AI assistant created by rajola! 🤖";
     }
-    if (msg.includes('owner') || msg.includes('rajola')) {
+    if (msg.includes('owner') || msg.includes('creator') || msg.includes('rajola')) {
         return "My creator is rajola! You can contact them at +255676195192 📱";
+    }
+    if (msg.includes('channel') || msg.includes('whatsapp')) {
+        return "Join my WhatsApp channel: https://whatsapp.com/channel/0029VbCU7aBLikgExwCBqW3P 📢";
     }
     return "I'm Venocyber-MD. How can I assist you today?";
 }
@@ -991,8 +1058,9 @@ function addAIMessage(elements, content, sender) {
     messageDiv.appendChild(timeDiv);
     elements.aiMessages.appendChild(messageDiv);
     
-    elements.aiMessages.scrollTop = elements.aiMessages.scrollHeight;
+    scrollToBottom(elements.aiMessages);
     
+    // Save to history
     aiMessages.push({ content, sender, timestamp: new Date().toISOString() });
     if (aiMessages.length > 50) aiMessages = aiMessages.slice(-50);
     localStorage.setItem('aiChatHistory', JSON.stringify(aiMessages));
@@ -1016,7 +1084,7 @@ function showAITyping(elements, show) {
                 </div>
             `;
             elements.aiMessages.appendChild(typingIndicator);
-            elements.aiMessages.scrollTop = elements.aiMessages.scrollHeight;
+            scrollToBottom(elements.aiMessages);
         }
     } else {
         if (typingIndicator) {
@@ -1030,16 +1098,14 @@ function loadAIChatHistory(elements) {
     if (saved && elements.aiMessages) {
         try {
             aiMessages = JSON.parse(saved);
-            elements.aiMessages.innerHTML = '';
-            aiMessages.forEach(msg => {
-                addAIMessage(elements, msg.content, msg.sender);
-            });
+            if (aiMessages.length > 0) {
+                elements.aiMessages.innerHTML = '';
+                aiMessages.forEach(msg => {
+                    addAIMessage(elements, msg.content, msg.sender);
+                });
+            }
         } catch (e) {
             console.error('Error loading AI history:', e);
-        }
-    } else {
-        if (elements.aiMessages && elements.aiMessages.children.length === 0) {
-            addAIMessage(elements, "Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?", 'ai');
         }
     }
 }
@@ -1118,7 +1184,7 @@ function showCreateGroupModal(elements) {
         memberEl.className = 'member-item';
         memberEl.innerHTML = `
             <input type="checkbox" value="${user.uid}" id="member-${user.uid}">
-            <img src="${user.photoURL || 'https://via.placeholder.com/32'}" alt="${user.displayName}">
+            <img src="${user.photoURL || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 32 32\'%3E%3Ccircle cx=\'16\' cy=\'16\' r=\'16\' fill=\'%2334d399\'/%3E%3Ctext x=\'16\' y=\'22\' text-anchor=\'middle\' fill=\'white\' font-size=\'16\' font-family=\'Arial\'%3E👤%3C/text%3E%3C/svg%3E'}" alt="${user.displayName}">
             <div class="member-info">
                 <div class="member-name">${user.displayName}</div>
                 <div class="member-status">${onlineUsers.has(user.uid) ? 'Online' : 'Offline'}</div>
@@ -1132,7 +1198,6 @@ function showCreateGroupModal(elements) {
 
 async function createGroup(elements) {
     const groupName = document.getElementById('group-name')?.value.trim();
-    const groupImage = document.getElementById('group-image')?.files[0];
     const selectedMembers = [];
     
     document.querySelectorAll('#member-selection input:checked').forEach(cb => {
@@ -1161,8 +1226,20 @@ async function createGroup(elements) {
             lastMessageTime: serverTimestamp()
         });
         
+        // Create a chat for the group
+        await addDoc(collection(db, 'chats'), {
+            type: 'group',
+            groupId: groupRef.id,
+            groupName: groupName,
+            participants: selectedMembers,
+            createdAt: serverTimestamp(),
+            lastMessage: null,
+            lastMessageTime: serverTimestamp()
+        });
+        
         showToast(elements, 'Group created successfully!', 'success');
-        document.getElementById('group-modal').classList.add('hidden');
+        const modal = document.getElementById('group-modal');
+        if (modal) modal.classList.add('hidden');
         
     } catch (error) {
         console.error('Error creating group:', error);
@@ -1177,10 +1254,25 @@ function formatTime(date) {
     const now = new Date();
     const diff = now - date;
     
-    if (diff < 86400000) {
+    if (diff < 86400000) { // Less than 24 hours
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {
         return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+}
+
+function formatDate(date) {
+    if (!date) return '';
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+    } else {
+        return date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
     }
 }
 
@@ -1206,6 +1298,11 @@ window.openImageModal = function(url) {
         modalImage.src = url;
         imageModal.classList.remove('hidden');
     }
+};
+
+// Export elements for use in other functions
+const elements = {
+    toastContainer: document.getElementById('toast-container')
 };
 
 console.log('✅ Chat.js fully loaded and ready!');

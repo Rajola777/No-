@@ -17,6 +17,9 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Venocyber AI -->
+    <script src="venocyber-api.js"></script>
+    
     <meta name="description" content="Chat with friends on Crunk Chat">
     <meta name="theme-color" content="#34d399">
     
@@ -90,7 +93,7 @@
                         </div>
                         <h3>No Chats Yet</h3>
                         <p>Start a conversation with your friends</p>
-                        <button class="btn-primary" onclick="switchTab('contacts')">
+                        <button class="btn-primary" onclick="switchToTab('contacts')">
                             <i class="fas fa-user-plus"></i> Find Friends
                         </button>
                     </div>
@@ -143,15 +146,7 @@
                         </button>
                     </div>
                     
-                    <div id="ai-messages" class="ai-messages">
-                        <!-- AI messages will appear here -->
-                        <div class="message ai-message">
-                            <div class="message-content">
-                                Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?
-                            </div>
-                            <div class="message-time">Just now</div>
-                        </div>
-                    </div>
+                    <div id="ai-messages" class="ai-messages"></div>
                     
                     <div class="ai-input-area">
                         <input type="text" id="ai-input" placeholder="Ask Venocyber anything...">
@@ -188,9 +183,7 @@
             </header>
             
             <!-- Chat Messages Container -->
-            <div class="chat-messages" id="message-box">
-                <!-- Messages will be loaded here -->
-            </div>
+            <div class="chat-messages" id="message-box"></div>
             
             <!-- Message Input Area -->
             <div class="chat-input-area">
@@ -227,23 +220,23 @@
                 <p id="menu-user-email"></p>
             </div>
             <div class="menu-items">
-                <div class="menu-item" onclick="showProfile()">
+                <div class="menu-item" id="menu-profile">
                     <i class="fas fa-user"></i>
                     <span>My Profile</span>
                 </div>
-                <div class="menu-item" onclick="toggleTheme()">
+                <div class="menu-item" id="menu-theme">
                     <i class="fas fa-moon"></i>
                     <span>Dark Mode</span>
                 </div>
-                <div class="menu-item" onclick="shareApp()">
+                <div class="menu-item" id="menu-share">
                     <i class="fas fa-share-alt"></i>
                     <span>Share App</span>
                 </div>
-                <div class="menu-item" onclick="openSettings()">
+                <div class="menu-item" id="menu-settings">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
                 </div>
-                <div class="menu-item logout" onclick="logout()">
+                <div class="menu-item logout" id="menu-logout">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Logout</span>
                 </div>
@@ -273,7 +266,7 @@
                     <span id="profile-modal-joined">Joined recently</span>
                 </div>
             </div>
-            <button class="btn-primary" onclick="closeModals()">Close</button>
+            <button class="btn-primary" id="close-profile-modal">Close</button>
         </div>
     </div>
 
@@ -298,10 +291,17 @@
             </div>
             
             <div class="modal-actions">
-                <button class="btn-secondary" onclick="closeModals()">Cancel</button>
-                <button class="btn-primary" onclick="createGroup()">Create Group</button>
+                <button class="btn-secondary" id="cancel-group">Cancel</button>
+                <button class="btn-primary" id="create-group">Create Group</button>
             </div>
         </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="image-modal" class="modal hidden">
+        <span class="close-modal" id="close-image-modal">&times;</span>
+        <img class="modal-content" id="modal-image">
+        <div id="modal-caption"></div>
     </div>
 
     <!-- Toast Notifications -->
@@ -312,41 +312,18 @@
         <div class="loading-spinner"></div>
         <p>Loading...</p>
     </div>
-<script>
-// Register Service Worker
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-                console.log('✅ ServiceWorker registered:', registration.scope);
-                
-                // Request notification permission
-                if ('Notification' in window && Notification.permission !== 'granted') {
-                    Notification.requestPermission();
-                }
-            })
-            .catch(error => {
-                console.log('❌ ServiceWorker registration failed:', error);
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(error => {
+                    console.log('ServiceWorker registration failed:', error);
+                });
             });
-    });
-}
+        }
+    </script>
 
-// Listen for online/offline events
-window.addEventListener('online', () => {
-    console.log('📶 You are back online');
-    window.showToast('You are back online!', 'success');
-});
-
-window.addEventListener('offline', () => {
-    console.log('📶 You are offline');
-    window.showToast('You are offline. Messages will be sent when reconnected.', 'warning');
-});
-
-// Check initial status
-if (!navigator.onLine) {
-    console.log('📶 Starting in offline mode');
-}
-</script>
     <!-- Main Chat Script -->
     <script type="module" src="chat.js"></script>
 </body>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venocyber-MD AI Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chat-container {
+            width: 400px;
+            height: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chat-header h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .chat-header .channel-link {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        
+        .chat-header .channel-link a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f5f5;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .bot-message {
+            align-items: flex-start;
+        }
+        
+        .user-message {
+            align-items: flex-end;
+        }
+        
+        .message-content {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .bot-message .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .user-message .message-content {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .message-info {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .bot-message .message-info {
+            margin-left: 5px;
+        }
+        
+        .user-message .message-info {
+            margin-right: 5px;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 15px;
+            border-bottom-left-radius: 5px;
+            margin-bottom: 15px;
+            width: fit-content;
+        }
+        
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background: #999;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing 1.5s infinite ease-in-out;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.6;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .chat-input input:focus {
+            border-color: #667eea;
+        }
+        
+        .chat-input button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s;
+        }
+        
+        .chat-input button:hover {
+            transform: scale(1.1);
+        }
+        
+        .chat-input button i {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>🤖 Venocyber-MD</h2>
+            <p>Created by: rajola</p>
+            <p class="channel-link">📢 Channel: <a href="https://whatsapp.com/channel/0029VbCU7aBLikgExwCBqW3P" target="_blank">Join Here</a></p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div class="message-info">Venocyber-MD • Just now</div>
+                <div class="message-content">
+                    Hello! I'm Venocyber-MD, your AI assistant. How can I help you today?
+                </div>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">
+                <i>📤</i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'YOUR_API_KEY'; // You can use free APIs like Gemini or OpenAI
+        
+        // AI Response function (using free API)
+        async function getAIResponse(userMessage) {
+            try {
+                // Option 1: Using free Gemini API (Recommended)
+                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + API_KEY, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: userMessage
+                            }]
+                        }]
+                    })
+                });
+                
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+                
+            } catch (error) {
+                console.error('API Error:', error);
+                return getLocalResponse(userMessage);
+            }
+        }
+        
+        // Local responses (fallback)
+        function getLocalResponse(message) {
+            message = message.toLowerCase();
+            
+            const responses = {
+                'hello': 'Hi there! How can I help you today?',
+                'hi': 'Hello! Great to see you!',
+                'how are you': 'I\'m doing great, thanks for asking! How about you?',
+                'what is your name': 'I\'m Venocyber-MD, created by rajola!',
+                'who created you': 'I was created by rajola!',
+                'help': 'I can chat with you, answer questions, tell jokes, and more! Just ask me anything.',
+                'joke': 'Why don\'t scientists trust atoms? Because they make up everything! 😄',
+                'time': 'The current time is ' + new Date().toLocaleTimeString(),
+                'date': 'Today is ' + new Date().toLocaleDateString(),
+                'bye': 'Goodbye! Feel free to chat with me anytime! 👋',
+                'thanks': 'You\'re welcome! Happy to help! 😊',
+                'owner': 'My owner is rajola! Contact: +255676195192',
+                'channel': 'Join my channel: https://whatsapp.com/channel/0029VbCU7aBLikgExwCBqW3P',
+                'website': 'You can find more info about me on my channel!'
+            };
+            
+            // Check for keywords
+            for (let key in responses) {
+                if (message.includes(key)) {
+                    return responses[key];
+                }
+            }
+            
+            // Default response
+            const defaultResponses = [
+                "That's interesting! Tell me more.",
+                "I understand. How can I help you with that?",
+                "Thanks for sharing! What else would you like to know?",
+                "I'm here to help! Feel free to ask me anything.",
+                "That's a good question! Let me think about it..."
+            ];
+            
+            return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            document.getElementById('typingIndicator').style.display = 'block';
+            
+            // Get AI response
+            setTimeout(async () => {
+                const response = await getAIResponse(message);
+                document.getElementById('typingIndicator').style.display = 'none';
+                addMessage(response, 'bot');
+            }, 1000);
+        }
+        
+        function addMessage(message, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'message-info';
+            
+            if (sender === 'bot') {
+                infoDiv.textContent = 'Venocyber-MD • Just now';
+            } else {
+                infoDiv.textContent = 'You • Just now';
+            }
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = message;
+            
+            messageDiv.appendChild(infoDiv);
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>

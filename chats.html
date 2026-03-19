@@ -1,1 +1,319 @@
-d
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crunk Chat - Connect with Friends</title>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="chat.css">
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <meta name="description" content="Chat with friends on Crunk Chat">
+    <meta name="theme-color" content="#34d399">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Main Home Screen -->
+        <div id="home-screen" class="screen active">
+            <!-- Header -->
+            <header class="header">
+                <div class="top-bar">
+                    <div class="logo-area">
+                        <i class="fas fa-comment-dots logo-icon"></i>
+                        <h2>Crunk Chat</h2>
+                    </div>
+                    <div class="header-actions">
+                        <i class="fas fa-search nav-btn" id="search-toggle"></i>
+                        <i class="fas fa-bars nav-btn" id="menu-toggle"></i>
+                        <div class="profile-badge" id="profile-badge">
+                            <img src="https://via.placeholder.com/32" alt="Profile" id="header-profile-pic">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="search-bar hidden" id="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search messages or users..." id="global-search">
+                    <i class="fas fa-times clear-search" id="clear-search"></i>
+                </div>
+                
+                <!-- Filter Tabs -->
+                <div class="filter-row">
+                    <div class="filter-item active" id="tab-chats">
+                        <div class="icon-circle green">
+                            <i class="fas fa-message"></i>
+                        </div>
+                        <span>Chats</span>
+                        <span class="badge" id="total-unread" style="display: none;">0</span>
+                    </div>
+                    <div class="filter-item" id="tab-contacts">
+                        <div class="icon-circle blue">
+                            <i class="fas fa-user-group"></i>
+                        </div>
+                        <span>Contacts</span>
+                    </div>
+                    <div class="filter-item" id="tab-groups">
+                        <div class="icon-circle purple">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span>Groups</span>
+                    </div>
+                    <div class="filter-item" id="tab-ai">
+                        <div class="icon-circle ai">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <span>Venocyber</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="content">
+                <!-- Chats View -->
+                <div id="chats-view" class="view active">
+                    <div id="empty-chats" class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <h3>No Chats Yet</h3>
+                        <p>Start a conversation with your friends</p>
+                        <button class="btn-primary" onclick="switchTab('contacts')">
+                            <i class="fas fa-user-plus"></i> Find Friends
+                        </button>
+                    </div>
+                    <div id="recent-chats-list" class="chats-list"></div>
+                </div>
+
+                <!-- Contacts View -->
+                <div id="contacts-view" class="view">
+                    <div class="contacts-header">
+                        <button id="invite-btn" class="btn-invite">
+                            <i class="fas fa-share-alt"></i> Invite Friends
+                        </button>
+                    </div>
+                    <div class="online-filter">
+                        <span class="filter-option active" data-filter="all"><i class="fas fa-users"></i> All</span>
+                        <span class="filter-option" data-filter="online"><i class="fas fa-circle" style="color: #34d399;"></i> Online</span>
+                    </div>
+                    <div id="user-list" class="contacts-list"></div>
+                </div>
+
+                <!-- Groups View -->
+                <div id="groups-view" class="view">
+                    <div class="groups-header">
+                        <button id="create-group-btn" class="btn-primary">
+                            <i class="fas fa-plus"></i> Create Group
+                        </button>
+                    </div>
+                    <div id="groups-list" class="groups-list"></div>
+                    <div id="empty-groups" class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3>No Groups Yet</h3>
+                        <p>Create a group to chat with multiple friends</p>
+                    </div>
+                </div>
+
+                <!-- AI Chat View -->
+                <div id="ai-view" class="view">
+                    <div class="ai-header">
+                        <div class="ai-info">
+                            <i class="fas fa-robot ai-icon"></i>
+                            <div>
+                                <h3>Venocyber-MD AI</h3>
+                                <p class="ai-status">Created by rajola • Online</p>
+                            </div>
+                        </div>
+                        <button id="clear-ai-chat" class="btn-icon">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="ai-messages" class="ai-messages">
+                        <!-- AI messages will appear here -->
+                        <div class="message ai-message">
+                            <div class="message-content">
+                                Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?
+                            </div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ai-input-area">
+                        <input type="text" id="ai-input" placeholder="Ask Venocyber anything...">
+                        <button id="ai-send-btn" class="btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Chat Screen -->
+        <div id="chat-screen" class="screen">
+            <header class="chat-header">
+                <div class="chat-header-left">
+                    <i class="fas fa-arrow-left" id="back-btn"></i>
+                    <div class="chat-user-info" id="chat-user-info">
+                        <img src="" alt="Avatar" id="chat-avatar" class="chat-avatar">
+                        <div class="chat-user-details">
+                            <h3 id="chat-with-name">Loading...</h3>
+                            <div class="user-status">
+                                <span class="status-indicator" id="chat-status-indicator"></span>
+                                <small id="chat-status-text">Offline</small>
+                                <span class="typing-indicator" id="typing-indicator" style="display: none;">typing...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-header-right">
+                    <i class="fas fa-phone" id="voice-call-btn"></i>
+                    <i class="fas fa-video" id="video-call-btn"></i>
+                    <i class="fas fa-ellipsis-vertical" id="chat-menu-btn"></i>
+                </div>
+            </header>
+            
+            <!-- Chat Messages Container -->
+            <div class="chat-messages" id="message-box">
+                <!-- Messages will be loaded here -->
+            </div>
+            
+            <!-- Message Input Area -->
+            <div class="chat-input-area">
+                <button class="attach-btn" id="attach-btn">
+                    <i class="fas fa-plus"></i>
+                </button>
+                
+                <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                
+                <div class="input-wrapper">
+                    <input type="text" placeholder="Type a message... (#ven for AI)" id="msg-input">
+                    <div class="input-actions">
+                        <i class="fas fa-smile" id="emoji-btn"></i>
+                        <i class="fas fa-image" id="image-btn"></i>
+                    </div>
+                </div>
+                
+                <button class="mic-btn" id="mic-btn">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="send-btn hidden" id="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu Modal -->
+    <div id="menu-modal" class="modal hidden">
+        <div class="modal-content menu-content">
+            <div class="menu-header">
+                <img id="menu-profile-pic" src="" alt="Profile">
+                <h3 id="menu-user-name"></h3>
+                <p id="menu-user-email"></p>
+            </div>
+            <div class="menu-items">
+                <div class="menu-item" onclick="showProfile()">
+                    <i class="fas fa-user"></i>
+                    <span>My Profile</span>
+                </div>
+                <div class="menu-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i>
+                    <span>Dark Mode</span>
+                </div>
+                <div class="menu-item" onclick="shareApp()">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Share App</span>
+                </div>
+                <div class="menu-item" onclick="openSettings()">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+                <div class="menu-item logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="modal hidden">
+        <div class="modal-content profile-content">
+            <div class="profile-header">
+                <img id="profile-modal-pic" src="" alt="Profile">
+                <h2 id="profile-modal-name"></h2>
+                <p id="profile-modal-email"></p>
+            </div>
+            <div class="profile-details">
+                <div class="profile-detail">
+                    <i class="fas fa-phone"></i>
+                    <span id="profile-modal-phone">Not provided</span>
+                </div>
+                <div class="profile-detail">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Not provided</span>
+                </div>
+                <div class="profile-detail">
+                    <i class="fas fa-calendar"></i>
+                    <span id="profile-modal-joined">Joined recently</span>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div id="group-modal" class="modal hidden">
+        <div class="modal-content group-content">
+            <h2><i class="fas fa-users"></i> Create New Group</h2>
+            
+            <div class="form-group">
+                <label>Group Name</label>
+                <input type="text" id="group-name" placeholder="Enter group name">
+            </div>
+            
+            <div class="form-group">
+                <label>Group Image (Optional)</label>
+                <input type="file" id="group-image" accept="image/*">
+            </div>
+            
+            <div class="form-group">
+                <label>Select Members</label>
+                <div id="member-selection" class="member-selection"></div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModals()">Cancel</button>
+                <button class="btn-primary" onclick="createGroup()">Create Group</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Main Chat Script -->
+    <script type="module" src="chat.js"></script>
+</body>
+</html>

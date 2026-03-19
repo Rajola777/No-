@@ -1,3 +1,28 @@
+// Add this at the VERY TOP of chat.js
+console.log('🚀 chat.js is loading...');
+console.log('📝 DOM state:', document.readyState);
+
+// Wrap everything in a DOMContentLoaded event
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ DOM fully loaded');
+    initializeApp();
+});
+
+function initializeApp() {
+    console.log('🔄 Initializing app...');
+    
+    // Check if user is logged in
+    const savedUser = localStorage.getItem('crunkUser');
+    console.log('👤 Saved user:', savedUser ? 'Found' : 'Not found');
+    
+    if (!savedUser && !auth.currentUser) {
+        console.log('❌ No user found, redirecting to login');
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    // Your existing code here, but wrapped in this function
+}
 // chat.js - Main Chat Application
 // Created by rajola - Complete with Venocyber-MD AI Integration
 

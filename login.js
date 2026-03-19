@@ -472,7 +472,7 @@ async function handleRedirectResult() {
             };
             
             localStorage.setItem("crunkUser", JSON.stringify(userData));
-            window.location.href = "home.html";
+            window.location.href = "chats.html";
         }
     } catch (error) {
         console.error("Redirect result error:", error);

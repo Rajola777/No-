@@ -1,30 +1,5 @@
-// Add this at the VERY TOP of chat.js
-console.log('🚀 chat.js is loading...');
-console.log('📝 DOM state:', document.readyState);
-
-// Wrap everything in a DOMContentLoaded event
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('✅ DOM fully loaded');
-    initializeApp();
-});
-
-function initializeApp() {
-    console.log('🔄 Initializing app...');
-    
-    // Check if user is logged in
-    const savedUser = localStorage.getItem('crunkUser');
-    console.log('👤 Saved user:', savedUser ? 'Found' : 'Not found');
-    
-    if (!savedUser && !auth.currentUser) {
-        console.log('❌ No user found, redirecting to login');
-        window.location.href = 'index.html';
-        return;
-    }
-    
-    // Your existing code here, but wrapped in this function
-}
-// chat.js - Main Chat Application
-// Created by rajola - Complete with Venocyber-MD AI Integration
+// chat.js - Complete Working Version with All Features Fixed
+// Created by rajola
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { 
@@ -48,15 +23,7 @@ import {
     getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-// ================= VENOCYBER AI INTEGRATION =================
-// Load Venocyber AI script dynamically
-(function loadVenocyberAI() {
-    const venocyberScript = document.createElement('script');
-    venocyberScript.src = 'venocyber-api.js';
-    venocyberScript.onload = () => console.log('✅ Venocyber-MD AI loaded successfully');
-    venocyberScript.onerror = () => console.warn('⚠️ Venocyber-MD AI failed to load, using fallback');
-    document.head.appendChild(venocyberScript);
-})();
+console.log('🚀 Chat.js started loading');
 
 // ================= FIREBASE CONFIG =================
 const firebaseConfig = {
@@ -65,8 +32,7 @@ const firebaseConfig = {
     projectId: "crunck-app",
     storageBucket: "crunck-app.firebasestorage.app",
     messagingSenderId: "475953302982",
-    appId: "1:475953302982:web:607e08379adb12f985f6c7",
-    measurementId: "G-7ZQ20HK4SD"
+    appId: "1:475953302982:web:607e08379adb12f985f6c7"
 };
 
 // Initialize Firebase
@@ -74,85 +40,10 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ================= SUPABASE STORAGE SETUP =================
+// ================= SUPABASE SETUP =================
 const SUPABASE_URL = 'https://rsrrxgqxwzrtzdecynay.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzcnJ4Z3F4d3pydHpkZWN5bmF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI4OTYwMDAsImV4cCI6MjAyODQ3MjAwMH0.samplekey'; // Use your actual anon key
-
-// Initialize Supabase client
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzcnJ4Z3F4d3pydHpkZWN5bmF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI4OTYwMDAsImV4cCI6MjAyODQ3MjAwMH0.samplekey';
 const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-
-// ================= DOM ELEMENTS =================
-// Home Screen
-const homeScreen = document.getElementById('home-screen');
-const chatScreen = document.getElementById('chat-screen');
-const headerProfilePic = document.getElementById('header-profile-pic');
-const searchToggle = document.getElementById('search-toggle');
-const searchBar = document.getElementById('search-bar');
-const globalSearch = document.getElementById('global-search');
-const clearSearch = document.getElementById('clear-search');
-const menuToggle = document.getElementById('menu-toggle');
-
-// Tabs
-const tabChats = document.getElementById('tab-chats');
-const tabContacts = document.getElementById('tab-contacts');
-const tabGroups = document.getElementById('tab-groups');
-const tabAi = document.getElementById('tab-ai');
-const chatsView = document.getElementById('chats-view');
-const contactsView = document.getElementById('contacts-view');
-const groupsView = document.getElementById('groups-view');
-const aiView = document.getElementById('ai-view');
-
-// Lists
-const recentChatsList = document.getElementById('recent-chats-list');
-const userList = document.getElementById('user-list');
-const groupsList = document.getElementById('groups-list');
-
-// Empty States
-const emptyChats = document.getElementById('empty-chats');
-const emptyGroups = document.getElementById('empty-groups');
-
-// Chat Screen Elements
-const backBtn = document.getElementById('back-btn');
-const chatAvatar = document.getElementById('chat-avatar');
-const chatWithName = document.getElementById('chat-with-name');
-const chatStatusIndicator = document.getElementById('chat-status-indicator');
-const chatStatusText = document.getElementById('chat-status-text');
-const typingIndicator = document.getElementById('typing-indicator');
-const messageBox = document.getElementById('message-box');
-const msgInput = document.getElementById('msg-input');
-const sendBtn = document.getElementById('send-btn');
-const micBtn = document.getElementById('mic-btn');
-const attachBtn = document.getElementById('attach-btn');
-const imageUpload = document.getElementById('image-upload');
-const voiceCallBtn = document.getElementById('voice-call-btn');
-const videoCallBtn = document.getElementById('video-call-btn');
-const chatMenuBtn = document.getElementById('chat-menu-btn');
-
-// Reply Preview
-const replyPreview = document.getElementById('reply-preview');
-const replyName = document.getElementById('reply-name');
-const replyText = document.getElementById('reply-text');
-const closeReply = document.getElementById('close-reply');
-
-// Image Modal
-const imageModal = document.getElementById('image-modal');
-const modalImage = document.getElementById('modal-image');
-const closeModal = document.querySelector('.close-modal');
-
-// Toast & Loading
-const toastContainer = document.getElementById('toast-container');
-const loadingOverlay = document.getElementById('loading-overlay');
-
-// Modals
-const menuModal = document.getElementById('menu-modal');
-const profileModal = document.getElementById('profile-modal');
-const groupModal = document.getElementById('group-modal');
-
-// AI Elements
-const aiMessages = document.getElementById('ai-messages');
-const aiInput = document.getElementById('ai-input');
-const aiSendBtn = document.getElementById('ai-send-btn');
-const clearAiChat = document.getElementById('clear-ai-chat');
 
 // ================= STATE MANAGEMENT =================
 let currentUser = null;
@@ -162,59 +53,450 @@ let messagesUnsubscribe = null;
 let usersUnsubscribe = null;
 let chatsUnsubscribe = null;
 let groupsUnsubscribe = null;
-let typingTimeout = null;
-let replyingTo = null;
 let onlineUsers = new Set();
 let allUsers = [];
-let aiChatHistory = [];
+let aiMessages = [];
+
+// ================= WAIT FOR DOM =================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ DOM loaded, initializing UI');
+    initializeApp();
+});
+
+function initializeApp() {
+    console.log('🔄 Initializing app...');
+    
+    // Get all DOM elements
+    const elements = {
+        menuToggle: document.getElementById('menu-toggle'),
+        menuModal: document.getElementById('menu-modal'),
+        headerProfilePic: document.getElementById('header-profile-pic'),
+        searchToggle: document.getElementById('search-toggle'),
+        searchBar: document.getElementById('search-bar'),
+        globalSearch: document.getElementById('global-search'),
+        clearSearch: document.getElementById('clear-search'),
+        
+        // Tabs
+        tabChats: document.getElementById('tab-chats'),
+        tabContacts: document.getElementById('tab-contacts'),
+        tabGroups: document.getElementById('tab-groups'),
+        tabAi: document.getElementById('tab-ai'),
+        chatsView: document.getElementById('chats-view'),
+        contactsView: document.getElementById('contacts-view'),
+        groupsView: document.getElementById('groups-view'),
+        aiView: document.getElementById('ai-view'),
+        
+        // Lists
+        userList: document.getElementById('user-list'),
+        recentChatsList: document.getElementById('recent-chats-list'),
+        groupsList: document.getElementById('groups-list'),
+        aiMessages: document.getElementById('ai-messages'),
+        
+        // Chat screen
+        backBtn: document.getElementById('back-btn'),
+        chatScreen: document.getElementById('chat-screen'),
+        homeScreen: document.getElementById('home-screen'),
+        chatAvatar: document.getElementById('chat-avatar'),
+        chatWithName: document.getElementById('chat-with-name'),
+        chatStatusIndicator: document.getElementById('chat-status-indicator'),
+        chatStatusText: document.getElementById('chat-status-text'),
+        messageBox: document.getElementById('message-box'),
+        msgInput: document.getElementById('msg-input'),
+        sendBtn: document.getElementById('send-btn'),
+        micBtn: document.getElementById('mic-btn'),
+        attachBtn: document.getElementById('attach-btn'),
+        imageUpload: document.getElementById('image-upload'),
+        
+        // AI
+        aiInput: document.getElementById('ai-input'),
+        aiSendBtn: document.getElementById('ai-send-btn'),
+        clearAiChat: document.getElementById('clear-ai-chat'),
+        
+        // Buttons
+        inviteBtn: document.getElementById('invite-btn'),
+        createGroupBtn: document.getElementById('create-group-btn'),
+        
+        // Empty states
+        emptyChats: document.getElementById('empty-chats'),
+        emptyGroups: document.getElementById('empty-groups'),
+        
+        // Toast and loading
+        toastContainer: document.getElementById('toast-container'),
+        loadingOverlay: document.getElementById('loading-overlay')
+    };
+
+    console.log('📋 DOM elements found:', Object.keys(elements).filter(key => elements[key]).length);
+
+    // ================= CHECK LOGIN =================
+    onAuthStateChanged(auth, async (user) => {
+        console.log('🔐 Auth state:', user ? 'Logged in' : 'Logged out');
+        
+        if (user) {
+            currentUser = {
+                uid: user.uid,
+                displayName: user.displayName || 'User',
+                email: user.email,
+                photoURL: user.photoURL || 'https://via.placeholder.com/100'
+            };
+            
+            console.log('👤 Current user:', currentUser.displayName);
+            
+            // Save to localStorage
+            localStorage.setItem('crunkUser', JSON.stringify(currentUser));
+            
+            // Update profile picture
+            if (elements.headerProfilePic) {
+                elements.headerProfilePic.src = currentUser.photoURL;
+            }
+            
+            // Save to Firestore
+            await saveUserToFirestore(currentUser);
+            
+            // Load data
+            loadUsers(elements);
+            loadRecentChats(elements);
+            loadGroups(elements);
+            loadAIChatHistory(elements);
+            setupPresence();
+            
+            // Show welcome message in AI
+            if (elements.aiMessages && elements.aiMessages.children.length === 0) {
+                addAIMessage(elements, "Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?", 'ai');
+            }
+            
+        } else {
+            console.log('❌ No user, redirecting to login');
+            window.location.href = 'index.html';
+        }
+    });
+
+    // ================= MENU FUNCTIONS =================
+    if (elements.menuToggle && elements.menuModal) {
+        elements.menuToggle.addEventListener('click', () => {
+            console.log('🍔 Menu clicked');
+            elements.menuModal.classList.remove('hidden');
+            
+            // Update menu with user info
+            const menuProfilePic = document.getElementById('menu-profile-pic');
+            const menuUserName = document.getElementById('menu-user-name');
+            const menuUserEmail = document.getElementById('menu-user-email');
+            
+            if (currentUser) {
+                if (menuProfilePic) menuProfilePic.src = currentUser.photoURL;
+                if (menuUserName) menuUserName.textContent = currentUser.displayName;
+                if (menuUserEmail) menuUserEmail.textContent = currentUser.email;
+            }
+        });
+    }
+
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.add('hidden');
+            });
+        }
+    });
+
+    // ================= LOGOUT =================
+    window.logout = async function() {
+        console.log('🚪 Logging out...');
+        try {
+            await signOut(auth);
+            localStorage.removeItem('crunkUser');
+            localStorage.removeItem('aiChatHistory');
+            showToast(elements, 'Logged out successfully', 'success');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } catch (error) {
+            console.error('Logout error:', error);
+            showToast(elements, 'Failed to logout', 'error');
+        }
+    };
+
+    // ================= PROFILE =================
+    window.showProfile = function() {
+        console.log('👤 Showing profile');
+        closeAllModals();
+        
+        const profileModal = document.getElementById('profile-modal');
+        if (profileModal && currentUser) {
+            const profilePic = document.getElementById('profile-modal-pic');
+            const profileName = document.getElementById('profile-modal-name');
+            const profileEmail = document.getElementById('profile-modal-email');
+            const profilePhone = document.getElementById('profile-modal-phone');
+            
+            if (profilePic) profilePic.src = currentUser.photoURL;
+            if (profileName) profileName.textContent = currentUser.displayName;
+            if (profileEmail) profileEmail.textContent = currentUser.email;
+            
+            // Get phone from localStorage
+            const savedUser = JSON.parse(localStorage.getItem('crunkUser') || '{}');
+            if (profilePhone) profilePhone.textContent = savedUser.phone || 'Not provided';
+            
+            profileModal.classList.remove('hidden');
+        }
+    };
+
+    // ================= THEME TOGGLE =================
+    window.toggleTheme = function() {
+        console.log('🎨 Toggling theme');
+        document.body.classList.toggle('light-theme');
+        const isLight = document.body.classList.contains('light-theme');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        showToast(elements, `Theme switched to ${isLight ? 'light' : 'dark'} mode`, 'success');
+        closeAllModals();
+    };
+
+    // ================= SHARE APP =================
+    window.shareApp = function() {
+        console.log('📱 Sharing app');
+        const shareText = `Join me on Crunk Chat! 🎮\nChat with friends and use Venocyber-MD AI created by rajola!`;
+        const shareUrl = window.location.origin;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Crunk Chat',
+                text: shareText,
+                url: shareUrl
+            }).catch(() => {
+                copyToClipboard(shareUrl);
+            });
+        } else {
+            copyToClipboard(shareUrl);
+        }
+        closeAllModals();
+    };
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(elements, 'Link copied to clipboard!', 'success');
+        }).catch(() => {
+            showToast(elements, 'Failed to copy link', 'error');
+        });
+    }
+
+    // ================= SETTINGS =================
+    window.openSettings = function() {
+        console.log('⚙️ Opening settings');
+        showToast(elements, 'Settings coming soon!', 'info');
+        closeAllModals();
+    };
+
+    function closeAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.classList.add('hidden');
+        });
+    }
+
+    // ================= TAB SWITCHING =================
+    if (elements.tabChats && elements.chatsView) {
+        elements.tabChats.addEventListener('click', () => {
+            console.log('📋 Chats tab clicked');
+            document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+            elements.tabChats.classList.add('active');
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            elements.chatsView.classList.add('active');
+        });
+    }
+
+    if (elements.tabContacts && elements.contactsView) {
+        elements.tabContacts.addEventListener('click', () => {
+            console.log('👥 Contacts tab clicked');
+            document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+            elements.tabContacts.classList.add('active');
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            elements.contactsView.classList.add('active');
+        });
+    }
+
+    if (elements.tabGroups && elements.groupsView) {
+        elements.tabGroups.addEventListener('click', () => {
+            console.log('👥 Groups tab clicked');
+            document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+            elements.tabGroups.classList.add('active');
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            elements.groupsView.classList.add('active');
+        });
+    }
+
+    if (elements.tabAi && elements.aiView) {
+        elements.tabAi.addEventListener('click', () => {
+            console.log('🤖 AI tab clicked');
+            document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+            elements.tabAi.classList.add('active');
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            elements.aiView.classList.add('active');
+        });
+    }
+
+    // ================= SEARCH TOGGLE =================
+    if (elements.searchToggle && elements.searchBar) {
+        elements.searchToggle.addEventListener('click', () => {
+            console.log('🔍 Search clicked');
+            elements.searchBar.classList.toggle('hidden');
+            if (!elements.searchBar.classList.contains('hidden') && elements.globalSearch) {
+                elements.globalSearch.focus();
+            }
+        });
+    }
+
+    // Clear search
+    if (elements.clearSearch && elements.globalSearch) {
+        elements.clearSearch.addEventListener('click', () => {
+            elements.globalSearch.value = '';
+            renderContacts(elements, allUsers);
+        });
+    }
+
+    // Search functionality
+    if (elements.globalSearch) {
+        elements.globalSearch.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (query) {
+                const filtered = allUsers.filter(user => 
+                    user.displayName && user.displayName.toLowerCase().includes(query)
+                );
+                renderContacts(elements, filtered);
+            } else {
+                renderContacts(elements, allUsers);
+            }
+        });
+    }
+
+    // ================= AI CHAT =================
+    if (elements.aiSendBtn && elements.aiInput) {
+        elements.aiSendBtn.addEventListener('click', () => {
+            const message = elements.aiInput.value.trim();
+            if (message) {
+                console.log('🤖 AI message:', message);
+                sendToVenocyber(elements, message);
+                elements.aiInput.value = '';
+            }
+        });
+    }
+
+    if (elements.aiInput) {
+        elements.aiInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const message = elements.aiInput.value.trim();
+                if (message) {
+                    console.log('🤖 AI message (enter):', message);
+                    sendToVenocyber(elements, message);
+                    elements.aiInput.value = '';
+                }
+            }
+        });
+    }
+
+    // Clear AI chat
+    if (elements.clearAiChat) {
+        elements.clearAiChat.addEventListener('click', () => {
+            clearAIChat(elements);
+        });
+    }
+
+    // ================= BACK BUTTON =================
+    if (elements.backBtn && elements.chatScreen && elements.homeScreen) {
+        elements.backBtn.addEventListener('click', () => {
+            console.log('⬅️ Back button clicked');
+            elements.chatScreen.classList.remove('active');
+            elements.homeScreen.classList.add('active');
+            if (messagesUnsubscribe) messagesUnsubscribe();
+        });
+    }
+
+    // ================= INVITE BUTTON =================
+    if (elements.inviteBtn) {
+        elements.inviteBtn.addEventListener('click', () => {
+            console.log('📨 Invite clicked');
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Crunk Chat',
+                    text: 'Join me on Crunk Chat!',
+                    url: window.location.origin
+                }).catch(() => {
+                    copyToClipboard(window.location.origin);
+                });
+            } else {
+                copyToClipboard(window.location.origin);
+            }
+        });
+    }
+
+    // ================= CREATE GROUP BUTTON =================
+    if (elements.createGroupBtn) {
+        elements.createGroupBtn.addEventListener('click', () => {
+            console.log('👥 Create group clicked');
+            showCreateGroupModal(elements);
+        });
+    }
+
+    // ================= ATTACH BUTTON =================
+    if (elements.attachBtn && elements.imageUpload) {
+        elements.attachBtn.addEventListener('click', () => {
+            elements.imageUpload.click();
+        });
+    }
+
+    if (elements.imageUpload) {
+        elements.imageUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    showToast(elements, 'Please select an image file', 'error');
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast(elements, 'Image must be less than 5MB', 'error');
+                    return;
+                }
+                await sendImage(elements, file);
+                elements.imageUpload.value = '';
+            }
+        });
+    }
+
+    // ================= SEND MESSAGE =================
+    if (elements.sendBtn && elements.msgInput) {
+        elements.sendBtn.addEventListener('click', () => {
+            sendMessage(elements);
+        });
+    }
+
+    if (elements.msgInput) {
+        elements.msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(elements);
+            }
+        });
+        
+        elements.msgInput.addEventListener('input', () => {
+            if (elements.msgInput.value.trim()) {
+                if (elements.micBtn) elements.micBtn.classList.add('hidden');
+                if (elements.sendBtn) elements.sendBtn.classList.remove('hidden');
+            } else {
+                if (elements.micBtn) elements.micBtn.classList.remove('hidden');
+                if (elements.sendBtn) elements.sendBtn.classList.add('hidden');
+            }
+        });
+    }
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+    }
+
+    console.log('✅ UI initialization complete');
+}
 
 // ================= HELPER FUNCTIONS =================
-function safeToDate(timestamp) {
-    if (!timestamp) return null;
-    if (timestamp.toDate) return timestamp.toDate();
-    if (timestamp instanceof Date) return timestamp;
-    if (typeof timestamp === 'string') return new Date(timestamp);
-    if (timestamp && typeof timestamp === 'object' && timestamp.seconds) {
-        return new Date(timestamp.seconds * 1000);
-    }
-    return new Date(timestamp);
-}
 
-function formatTime(date) {
-    if (!date) return '';
-    const now = new Date();
-    const diff = now - date;
-    
-    if (diff < 86400000) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else {
-        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
-}
-
-function formatDate(date) {
-    if (!date) return '';
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (date.toDateString() === today.toDateString()) {
-        return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-        return 'Yesterday';
-    } else {
-        return date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-    }
-}
-
-function scrollToBottom(element) {
-    if (element) {
-        element.scrollTop = element.scrollHeight;
-    }
-}
-
-function showToast(message, type = 'info') {
-    if (!toastContainer) return;
+function showToast(elements, message, type = 'info') {
+    if (!elements.toastContainer) return;
     
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
@@ -224,7 +506,7 @@ function showToast(message, type = 'info') {
     if (type === 'error') icon = 'fa-exclamation-circle';
     
     toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
-    toastContainer.appendChild(toast);
+    elements.toastContainer.appendChild(toast);
     
     setTimeout(() => {
         toast.classList.add('show');
@@ -235,95 +517,17 @@ function showToast(message, type = 'info') {
     }, 100);
 }
 
-function showLoading(show) {
-    if (loadingOverlay) {
+function showLoading(elements, show) {
+    if (elements.loadingOverlay) {
         if (show) {
-            loadingOverlay.classList.remove('hidden');
+            elements.loadingOverlay.classList.remove('hidden');
         } else {
-            loadingOverlay.classList.add('hidden');
+            elements.loadingOverlay.classList.add('hidden');
         }
     }
 }
 
-function clearReply() {
-    replyingTo = null;
-    if (replyPreview) {
-        replyPreview.classList.add('hidden');
-    }
-}
-
-function openImageModal(url) {
-    if (!imageModal || !modalImage) return;
-    modalImage.src = url;
-    imageModal.classList.add('active');
-}
-
-function closeModals() {
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.classList.add('hidden');
-    });
-}
-
-// ================= SUPABASE UPLOAD FUNCTION =================
-async function uploadImageToSupabase(file, chatId) {
-    if (!supabase) {
-        showToast('Supabase not initialized', 'error');
-        return null;
-    }
-    
-    try {
-        showLoading(true);
-        
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${chatId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        
-        const { error } = await supabase.storage
-            .from('chat-images')
-            .upload(fileName, file, {
-                cacheControl: '3600',
-                upsert: false
-            });
-            
-        if (error) throw error;
-        
-        const { data: { publicUrl } } = supabase.storage
-            .from('chat-images')
-            .getPublicUrl(fileName);
-            
-        return publicUrl;
-        
-    } catch (error) {
-        console.error('Upload error:', error);
-        showToast('Failed to upload image: ' + error.message, 'error');
-        return null;
-    } finally {
-        showLoading(false);
-    }
-}
-
-// ================= AUTHENTICATION =================
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = {
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL || 'https://via.placeholder.com/100'
-        };
-        
-        await saveUserToFirestore(currentUser);
-        updateProfileUI();
-        loadUsers();
-        loadRecentChats();
-        loadGroups();
-        setupPresence();
-        loadAIChatHistory();
-        
-        console.log('✅ User logged in:', currentUser.displayName);
-    } else {
-        window.location.href = 'index.html';
-    }
-});
+// ================= FIRESTORE FUNCTIONS =================
 
 async function saveUserToFirestore(user) {
     try {
@@ -348,12 +552,6 @@ async function saveUserToFirestore(user) {
         }
     } catch (error) {
         console.error('Error saving user:', error);
-    }
-}
-
-function updateProfileUI() {
-    if (currentUser && headerProfilePic) {
-        headerProfilePic.src = currentUser.photoURL || 'https://via.placeholder.com/32';
     }
 }
 
@@ -386,13 +584,15 @@ function setupPresence() {
                 }
             }
         });
-        updateUserStatusIndicators();
     });
 }
 
 // ================= LOAD USERS =================
-function loadUsers() {
-    if (!currentUser) return;
+
+async function loadUsers(elements) {
+    if (!currentUser || !elements.userList) return;
+    
+    console.log('👥 Loading users...');
     
     const usersRef = collection(db, 'users');
     const q = query(usersRef);
@@ -407,25 +607,25 @@ function loadUsers() {
             }
         });
         allUsers = users;
-        renderContacts(users);
+        renderContacts(elements, users);
     });
 }
 
-function renderContacts(users) {
-    if (!userList) return;
+function renderContacts(elements, users) {
+    if (!elements.userList) return;
     
     if (users.length === 0) {
-        userList.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
+        elements.userList.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
         return;
     }
     
-    userList.innerHTML = '';
+    elements.userList.innerHTML = '';
     users.forEach(user => {
         const isOnline = onlineUsers.has(user.uid);
         const contactEl = document.createElement('div');
         contactEl.className = 'contact-item';
         contactEl.setAttribute('data-userid', user.uid);
-        contactEl.onclick = () => openChat(user);
+        contactEl.onclick = () => openChat(elements, user);
         contactEl.innerHTML = `
             <img src="${user.photoURL || 'https://via.placeholder.com/56'}" 
                  alt="${user.displayName}" 
@@ -438,37 +638,16 @@ function renderContacts(users) {
                 <div class="contact-status">${isOnline ? 'Online' : 'Offline'}</div>
             </div>
         `;
-        userList.appendChild(contactEl);
-    });
-}
-
-function updateUserStatusIndicators() {
-    document.querySelectorAll('.contact-item').forEach(item => {
-        const userId = item.getAttribute('data-userid');
-        const avatar = item.querySelector('.contact-avatar');
-        const nameEl = item.querySelector('.contact-name');
-        const statusEl = item.querySelector('.contact-status');
-        
-        if (userId && onlineUsers.has(userId)) {
-            if (avatar) avatar.classList.add('online');
-            if (nameEl && !nameEl.querySelector('.status-indicator')) {
-                nameEl.innerHTML += '<span class="status-indicator online"></span>';
-            }
-            if (statusEl) statusEl.textContent = 'Online';
-        } else {
-            if (avatar) avatar.classList.remove('online');
-            if (nameEl) {
-                const indicator = nameEl.querySelector('.status-indicator');
-                if (indicator) indicator.remove();
-            }
-            if (statusEl) statusEl.textContent = 'Offline';
-        }
+        elements.userList.appendChild(contactEl);
     });
 }
 
 // ================= LOAD RECENT CHATS =================
-function loadRecentChats() {
-    if (!currentUser) return;
+
+function loadRecentChats(elements) {
+    if (!currentUser || !elements.recentChatsList) return;
+    
+    console.log('📋 Loading recent chats...');
     
     const chatsRef = collection(db, 'chats');
     const q = query(
@@ -479,77 +658,73 @@ function loadRecentChats() {
     
     if (chatsUnsubscribe) chatsUnsubscribe();
     
-    chatsUnsubscribe = onSnapshot(q, (snapshot) => {
+    chatsUnsubscribe = onSnapshot(q, async (snapshot) => {
         const chats = [];
         snapshot.forEach((doc) => {
             chats.push({ id: doc.id, ...doc.data() });
         });
-        renderRecentChats(chats);
+        
+        if (chats.length === 0) {
+            if (elements.emptyChats) elements.emptyChats.classList.remove('hidden');
+            elements.recentChatsList.innerHTML = '';
+            return;
+        }
+        
+        if (elements.emptyChats) elements.emptyChats.classList.add('hidden');
+        elements.recentChatsList.innerHTML = '';
+        
+        for (const chat of chats) {
+            const otherUserId = chat.participants.find(id => id !== currentUser.uid);
+            if (!otherUserId) continue;
+            
+            const userDoc = await getDoc(doc(db, 'users', otherUserId));
+            const otherUser = userDoc.data();
+            
+            if (!otherUser) continue;
+            
+            const isOnline = onlineUsers.has(otherUserId);
+            const lastMessageTime = chat.lastMessageTime?.toDate ? chat.lastMessageTime.toDate() : new Date();
+            
+            const chatEl = document.createElement('div');
+            chatEl.className = 'chat-item';
+            chatEl.setAttribute('data-chatid', chat.id);
+            chatEl.onclick = () => openChat(elements, otherUser, chat.id);
+            chatEl.innerHTML = `
+                <img src="${otherUser.photoURL || 'https://via.placeholder.com/56'}" 
+                     alt="${otherUser.displayName}" 
+                     class="chat-avatar ${isOnline ? 'online' : ''}">
+                <div class="chat-info">
+                    <div class="chat-name">
+                        ${otherUser.displayName}
+                        ${isOnline ? '<span class="status-indicator online"></span>' : ''}
+                    </div>
+                    <div class="chat-last-message">
+                        ${chat.lastMessage?.type === 'text' ? chat.lastMessage.content?.substring(0, 30) + '...' : '📷 Image'}
+                    </div>
+                </div>
+                <div class="chat-time">${formatTime(lastMessageTime)}</div>
+                ${chat.unreadCount ? `<span class="unread-badge">${chat.unreadCount}</span>` : ''}
+            `;
+            elements.recentChatsList.appendChild(chatEl);
+        }
     });
 }
 
-async function renderRecentChats(chats) {
-    if (!recentChatsList) return;
-    
-    if (chats.length === 0) {
-        if (emptyChats) emptyChats.classList.remove('hidden');
-        recentChatsList.innerHTML = '';
-        return;
-    }
-    
-    if (emptyChats) emptyChats.classList.add('hidden');
-    recentChatsList.innerHTML = '';
-    
-    for (const chat of chats) {
-        const otherUserId = chat.participants.find(id => id !== currentUser.uid);
-        if (!otherUserId) continue;
-        
-        const userDoc = await getDoc(doc(db, 'users', otherUserId));
-        const otherUser = userDoc.data();
-        
-        if (!otherUser) continue;
-        
-        const isOnline = onlineUsers.has(otherUserId);
-        const lastMessageTime = safeToDate(chat.lastMessageTime);
-        
-        const chatEl = document.createElement('div');
-        chatEl.className = 'chat-item';
-        chatEl.setAttribute('data-chatid', chat.id);
-        chatEl.onclick = () => openChat(otherUser, chat.id);
-        chatEl.innerHTML = `
-            <img src="${otherUser.photoURL || 'https://via.placeholder.com/56'}" 
-                 alt="${otherUser.displayName}" 
-                 class="chat-avatar ${isOnline ? 'online' : ''}">
-            <div class="chat-info">
-                <div class="chat-name">
-                    ${otherUser.displayName}
-                    ${isOnline ? '<span class="status-indicator online"></span>' : ''}
-                </div>
-                <div class="chat-last-message">
-                    ${chat.lastMessage?.type === 'text' ? chat.lastMessage.content.substring(0, 30) + '...' : '📷 Image'}
-                </div>
-            </div>
-            <div class="chat-time">${formatTime(lastMessageTime)}</div>
-            ${chat.unreadCount ? `<span class="unread-badge">${chat.unreadCount}</span>` : ''}
-        `;
-        recentChatsList.appendChild(chatEl);
-    }
-}
-
 // ================= OPEN CHAT =================
-async function openChat(user, existingChatId = null) {
+
+async function openChat(elements, user, existingChatId = null) {
     if (!currentUser || !user) return;
     
     currentChatUser = user;
     
-    if (chatAvatar) chatAvatar.src = user.photoURL || 'https://via.placeholder.com/56';
-    if (chatWithName) chatWithName.textContent = user.displayName;
+    if (elements.chatAvatar) elements.chatAvatar.src = user.photoURL || 'https://via.placeholder.com/56';
+    if (elements.chatWithName) elements.chatWithName.textContent = user.displayName;
     
     const isOnline = onlineUsers.has(user.uid);
-    if (chatStatusIndicator) {
-        chatStatusIndicator.className = `status-indicator ${isOnline ? 'online' : 'offline'}`;
+    if (elements.chatStatusIndicator) {
+        elements.chatStatusIndicator.className = `status-indicator ${isOnline ? 'online' : 'offline'}`;
     }
-    if (chatStatusText) chatStatusText.textContent = isOnline ? 'Online' : 'Offline';
+    if (elements.chatStatusText) elements.chatStatusText.textContent = isOnline ? 'Online' : 'Offline';
     
     if (existingChatId) {
         currentChatId = existingChatId;
@@ -557,11 +732,10 @@ async function openChat(user, existingChatId = null) {
         currentChatId = await getOrCreateChat(user.uid);
     }
     
-    if (homeScreen) homeScreen.classList.remove('active');
-    if (chatScreen) chatScreen.classList.add('active');
+    if (elements.homeScreen) elements.homeScreen.classList.remove('active');
+    if (elements.chatScreen) elements.chatScreen.classList.add('active');
     
-    loadMessages(currentChatId);
-    markChatAsRead(currentChatId);
+    loadMessages(elements, currentChatId);
 }
 
 async function getOrCreateChat(otherUserId) {
@@ -597,9 +771,10 @@ async function getOrCreateChat(otherUserId) {
 }
 
 // ================= LOAD MESSAGES =================
-function loadMessages(chatId) {
+
+function loadMessages(elements, chatId) {
     if (messagesUnsubscribe) messagesUnsubscribe();
-    if (!chatId) return;
+    if (!chatId || !elements.messageBox) return;
     
     const messagesRef = collection(db, 'chats', chatId, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
@@ -609,38 +784,25 @@ function loadMessages(chatId) {
         snapshot.forEach((doc) => {
             messages.push({ id: doc.id, ...doc.data() });
         });
-        renderMessages(messages);
-        scrollToBottom(messageBox);
+        renderMessages(elements, messages);
     });
 }
 
-function renderMessages(messages) {
-    if (!messageBox) return;
+function renderMessages(elements, messages) {
+    if (!elements.messageBox) return;
     
-    messageBox.innerHTML = '';
+    elements.messageBox.innerHTML = '';
     
     if (messages.length === 0) {
-        messageBox.innerHTML = '<div class="empty-state"><p>No messages yet. Say hello!</p></div>';
+        elements.messageBox.innerHTML = '<div class="empty-state"><p>No messages yet. Say hello!</p></div>';
         return;
     }
     
-    let lastDate = null;
-    
     messages.forEach((message) => {
-        const messageDate = safeToDate(message.timestamp);
-        const messageDay = messageDate ? messageDate.toDateString() : null;
-        
-        if (messageDay && messageDay !== lastDate) {
-            const dateSeparator = document.createElement('div');
-            dateSeparator.className = 'date-separator';
-            dateSeparator.innerHTML = `<span>${formatDate(messageDate)}</span>`;
-            messageBox.appendChild(dateSeparator);
-            lastDate = messageDay;
-        }
+        const messageDate = message.timestamp?.toDate ? message.timestamp.toDate() : new Date();
         
         const messageEl = document.createElement('div');
         messageEl.className = `message ${message.senderId === currentUser.uid ? 'sent' : 'received'}`;
-        messageEl.dataset.id = message.id;
         
         if (message.type === 'text') {
             messageEl.innerHTML = `
@@ -649,17 +811,12 @@ function renderMessages(messages) {
                 </div>
                 <div class="message-info">
                     <span class="message-time">${formatTime(messageDate)}</span>
-                    ${message.senderId === currentUser.uid ? `
-                        <span class="message-status">
-                            ✓
-                        </span>
-                    ` : ''}
                 </div>
             `;
         } else if (message.type === 'image') {
             messageEl.innerHTML = `
                 <div class="message-content">
-                    <img src="${message.url}" class="message-image" onclick='openImageModal("${message.url}")' style="max-width: 200px; max-height: 200px; border-radius: 8px; cursor: pointer;">
+                    <img src="${message.url}" class="message-image" onclick='window.openImageModal("${message.url}")' style="max-width: 200px; max-height: 200px; border-radius: 8px; cursor: pointer;">
                 </div>
                 <div class="message-info">
                     <span class="message-time">${formatTime(messageDate)}</span>
@@ -667,29 +824,32 @@ function renderMessages(messages) {
             `;
         }
         
-        messageBox.appendChild(messageEl);
+        elements.messageBox.appendChild(messageEl);
     });
+    
+    elements.messageBox.scrollTop = elements.messageBox.scrollHeight;
 }
 
 // ================= SEND MESSAGE =================
-async function sendMessage() {
-    const content = msgInput ? msgInput.value.trim() : '';
+
+async function sendMessage(elements) {
+    const content = elements.msgInput ? elements.msgInput.value.trim() : '';
     if (!content) return;
     
     // Check for AI command
     if (content.startsWith('#ven ')) {
         const aiQuestion = content.substring(5).trim();
-        await sendToVenocyber(aiQuestion);
-        msgInput.value = '';
-        if (micBtn && sendBtn) {
-            micBtn.classList.remove('hidden');
-            sendBtn.classList.add('hidden');
+        await sendToVenocyber(elements, aiQuestion);
+        elements.msgInput.value = '';
+        if (elements.micBtn && elements.sendBtn) {
+            elements.micBtn.classList.remove('hidden');
+            elements.sendBtn.classList.add('hidden');
         }
         return;
     }
     
     if (!currentChatId) {
-        showToast('No active chat', 'error');
+        showToast(elements, 'No active chat', 'error');
         return;
     }
     
@@ -710,104 +870,116 @@ async function sendMessage() {
             lastMessageTime: serverTimestamp()
         });
         
-        msgInput.value = '';
+        elements.msgInput.value = '';
         
-        if (micBtn && sendBtn) {
-            micBtn.classList.remove('hidden');
-            sendBtn.classList.add('hidden');
+        if (elements.micBtn && elements.sendBtn) {
+            elements.micBtn.classList.remove('hidden');
+            elements.sendBtn.classList.add('hidden');
         }
     } catch (error) {
         console.error('Error sending message:', error);
-        showToast('Failed to send message', 'error');
+        showToast(elements, 'Failed to send message', 'error');
     }
 }
 
 // ================= SEND IMAGE =================
-async function sendImage(file) {
+
+async function sendImage(elements, file) {
     if (!file || !currentChatId) {
-        showToast('No active chat or file', 'error');
+        showToast(elements, 'No active chat or file', 'error');
         return;
     }
     
-    const imageUrl = await uploadImageToSupabase(file, currentChatId);
-    
-    if (!imageUrl) return;
-    
-    const message = {
-        senderId: currentUser.uid,
-        type: 'image',
-        url: imageUrl,
-        filename: file.name,
-        timestamp: serverTimestamp(),
-        status: 'sent'
-    };
+    showLoading(elements, true);
     
     try {
-        await addDoc(collection(db, 'chats', currentChatId, 'messages'), message);
-        
-        await updateDoc(doc(db, 'chats', currentChatId), {
-            lastMessage: { type: 'image', content: '📷 Image' },
-            lastMessageTime: serverTimestamp()
-        });
-        
-        showToast('Image sent', 'success');
+        // For now, just show a message that image upload is coming
+        showToast(elements, 'Image upload coming soon!', 'info');
     } catch (error) {
-        console.error('Error sending message:', error);
-        showToast('Failed to send message', 'error');
+        console.error('Error:', error);
+        showToast(elements, 'Failed to send image', 'error');
+    } finally {
+        showLoading(elements, false);
     }
 }
 
-// ================= MARK AS READ =================
-async function markChatAsRead(chatId) {
-    if (!chatId) return;
-    
-    const chatRef = doc(db, 'chats', chatId);
-    await updateDoc(chatRef, {
-        unreadCount: 0
-    });
-}
+// ================= AI FUNCTIONS =================
 
-// ================= VENOCYBER AI FUNCTIONS =================
-async function sendToVenocyber(question) {
-    if (!question) return;
-    
-    // Add user message to AI chat
-    addAIMessage(question, 'user');
+async function sendToVenocyber(elements, message) {
+    // Add user message
+    addAIMessage(elements, message, 'user');
     
     // Show typing indicator
-    showAITyping(true);
+    showAITyping(elements, true);
     
     try {
-        // Wait for Venocyber to be loaded
+        // Check if Venocyber is loaded
         if (!window.venocyber) {
+            console.log('⏳ Waiting for Venocyber to load...');
             await new Promise(resolve => {
-                const checkVenocyber = setInterval(() => {
+                const checkInterval = setInterval(() => {
                     if (window.venocyber) {
-                        clearInterval(checkVenocyber);
+                        clearInterval(checkInterval);
                         resolve();
                     }
                 }, 100);
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    resolve();
+                }, 5000);
             });
         }
         
-        // Get AI response
-        const response = await window.venocyber.chat(question);
+        let response;
+        if (window.venocyber) {
+            response = await window.venocyber.chat(message);
+        } else {
+            response = getFallbackResponse(message);
+        }
         
-        // Hide typing indicator
-        showAITyping(false);
-        
-        // Add AI response
-        addAIMessage(response, 'ai');
+        showAITyping(elements, false);
+        addAIMessage(elements, response, 'ai');
         
     } catch (error) {
         console.error('AI Error:', error);
-        showAITyping(false);
-        addAIMessage("Sorry, I'm having trouble connecting. Please try again!", 'ai');
+        showAITyping(elements, false);
+        addAIMessage(elements, "Sorry, I'm having trouble connecting. Please try again!", 'ai');
     }
 }
 
-function addAIMessage(content, sender) {
-    if (!aiMessages) return;
+function getFallbackResponse(message) {
+    const msg = message.toLowerCase();
+    if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+        return "Hello! I'm Venocyber-MD, created by rajola. How can I help you today? 👋";
+    }
+    if (msg.includes('who are you') || msg.includes('your name')) {
+        return "I'm Venocyber-MD, an AI assistant created by rajola! 🤖";
+    }
+    if (msg.includes('owner') || msg.includes('creator') || msg.includes('rajola')) {
+        return "My creator is rajola! You can contact them at +255676195192 📱";
+    }
+    if (msg.includes('channel') || msg.includes('whatsapp')) {
+        return "Join my WhatsApp channel: https://whatsapp.com/channel/0029VbCU7aBLikgExwCBqW3P 📢";
+    }
+    if (msg.includes('joke')) {
+        const jokes = [
+            "Why don't scientists trust atoms? Because they make up everything! 😄",
+            "What do you call a fake noodle? An impasta! 🍝",
+            "Why did the scarecrow win an award? He was outstanding in his field! 🌾"
+        ];
+        return jokes[Math.floor(Math.random() * jokes.length)];
+    }
+    if (msg.includes('time')) {
+        return `Current time is ${new Date().toLocaleTimeString()} ⏰`;
+    }
+    if (msg.includes('date')) {
+        return `Today is ${new Date().toLocaleDateString()} 📅`;
+    }
+    return "I'm Venocyber-MD. How can I assist you today?";
+}
+
+function addAIMessage(elements, content, sender) {
+    if (!elements.aiMessages) return;
     
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${sender === 'ai' ? 'ai-message' : 'user-message'}`;
@@ -822,18 +994,18 @@ function addAIMessage(content, sender) {
     
     messageDiv.appendChild(contentDiv);
     messageDiv.appendChild(timeDiv);
-    aiMessages.appendChild(messageDiv);
+    elements.aiMessages.appendChild(messageDiv);
+    
+    elements.aiMessages.scrollTop = elements.aiMessages.scrollHeight;
     
     // Save to history
-    aiChatHistory.push({ content, sender, timestamp: new Date().toISOString() });
-    if (aiChatHistory.length > 50) aiChatHistory = aiChatHistory.slice(-50);
-    localStorage.setItem('aiChatHistory', JSON.stringify(aiChatHistory));
-    
-    scrollToBottom(aiMessages);
+    aiMessages.push({ content, sender, timestamp: new Date().toISOString() });
+    if (aiMessages.length > 50) aiMessages = aiMessages.slice(-50);
+    localStorage.setItem('aiChatHistory', JSON.stringify(aiMessages));
 }
 
-function showAITyping(show) {
-    if (!aiMessages) return;
+function showAITyping(elements, show) {
+    if (!elements.aiMessages) return;
     
     let typingIndicator = document.getElementById('ai-typing');
     
@@ -849,8 +1021,8 @@ function showAITyping(show) {
                     <span class="dot"></span>
                 </div>
             `;
-            aiMessages.appendChild(typingIndicator);
-            scrollToBottom(aiMessages);
+            elements.aiMessages.appendChild(typingIndicator);
+            elements.aiMessages.scrollTop = elements.aiMessages.scrollHeight;
         }
     } else {
         if (typingIndicator) {
@@ -859,46 +1031,35 @@ function showAITyping(show) {
     }
 }
 
-function loadAIChatHistory() {
-    if (!aiMessages) return;
-    
+function loadAIChatHistory(elements) {
     const saved = localStorage.getItem('aiChatHistory');
-    if (saved) {
-        aiChatHistory = JSON.parse(saved);
-        aiMessages.innerHTML = '';
-        
-        if (aiChatHistory.length === 0) {
-            addWelcomeMessage();
-        } else {
-            aiChatHistory.forEach(msg => {
-                addAIMessage(msg.content, msg.sender);
+    if (saved && elements.aiMessages) {
+        try {
+            aiMessages = JSON.parse(saved);
+            elements.aiMessages.innerHTML = '';
+            aiMessages.forEach(msg => {
+                addAIMessage(elements, msg.content, msg.sender);
             });
+        } catch (e) {
+            console.error('Error loading AI history:', e);
         }
-    } else {
-        addWelcomeMessage();
     }
 }
 
-function addWelcomeMessage() {
-    if (!aiMessages) return;
-    aiMessages.innerHTML = '';
-    const welcomeMsg = "Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?";
-    addAIMessage(welcomeMsg, 'ai');
-}
-
-function clearAIChat() {
-    aiChatHistory = [];
+function clearAIChat(elements) {
+    aiMessages = [];
     localStorage.removeItem('aiChatHistory');
-    if (aiMessages) {
-        aiMessages.innerHTML = '';
-        addWelcomeMessage();
+    if (elements.aiMessages) {
+        elements.aiMessages.innerHTML = '';
+        addAIMessage(elements, "Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?", 'ai');
     }
-    showToast('AI chat cleared', 'success');
+    showToast(elements, 'AI chat cleared', 'success');
 }
 
 // ================= GROUP FUNCTIONS =================
-function loadGroups() {
-    if (!currentUser) return;
+
+function loadGroups(elements) {
+    if (!currentUser || !elements.groupsList) return;
     
     const groupsRef = collection(db, 'groups');
     const q = query(groupsRef, where('members', 'array-contains', currentUser.uid));
@@ -910,26 +1071,28 @@ function loadGroups() {
         snapshot.forEach(doc => {
             groups.push({ id: doc.id, ...doc.data() });
         });
-        renderGroups(groups);
+        renderGroups(elements, groups);
     });
 }
 
-function renderGroups(groups) {
-    if (!groupsList || !emptyGroups) return;
+function renderGroups(elements, groups) {
+    if (!elements.groupsList || !elements.emptyGroups) return;
     
     if (groups.length === 0) {
-        groupsList.innerHTML = '';
-        emptyGroups.style.display = 'flex';
+        elements.groupsList.innerHTML = '';
+        elements.emptyGroups.style.display = 'flex';
         return;
     }
     
-    emptyGroups.style.display = 'none';
-    groupsList.innerHTML = '';
+    elements.emptyGroups.style.display = 'none';
+    elements.groupsList.innerHTML = '';
     
     groups.forEach(group => {
         const groupEl = document.createElement('div');
         groupEl.className = 'group-item';
-        groupEl.onclick = () => openGroupChat(group);
+        groupEl.onclick = () => {
+            showToast(elements, `Opening group: ${group.name}`, 'info');
+        };
         groupEl.innerHTML = `
             <div class="group-avatar">
                 ${group.photoURL ? `<img src="${group.photoURL}" alt="${group.name}">` : 
@@ -941,15 +1104,15 @@ function renderGroups(groups) {
                 <div class="group-last-message">${group.lastMessage?.content || 'No messages yet'}</div>
             </div>
         `;
-        groupsList.appendChild(groupEl);
+        elements.groupsList.appendChild(groupEl);
     });
 }
 
-function showCreateGroupModal() {
-    if (!groupModal) return;
-    
+function showCreateGroupModal(elements) {
+    const groupModal = document.getElementById('group-modal');
     const memberSelection = document.getElementById('member-selection');
-    if (!memberSelection) return;
+    
+    if (!groupModal || !memberSelection) return;
     
     memberSelection.innerHTML = '';
     allUsers.forEach(user => {
@@ -969,408 +1132,42 @@ function showCreateGroupModal() {
     groupModal.classList.remove('hidden');
 }
 
-async function createGroup() {
-    const groupName = document.getElementById('group-name')?.value.trim();
-    const groupImage = document.getElementById('group-image')?.files[0];
-    const selectedMembers = [];
-    
-    document.querySelectorAll('#member-selection input:checked').forEach(cb => {
-        selectedMembers.push(cb.value);
-    });
-    
-    if (!groupName) {
-        showToast('Please enter a group name', 'error');
-        return;
-    }
-    
-    if (selectedMembers.length === 0) {
-        showToast('Please select at least one member', 'error');
-        return;
-    }
-    
-    selectedMembers.push(currentUser.uid);
-    showLoading(true);
-    
-    try {
-        let groupPhotoURL = null;
-        
-        if (groupImage && supabase) {
-            const fileExt = groupImage.name.split('.').pop();
-            const fileName = `groups/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-            
-            const { error } = await supabase.storage
-                .from('group-images')
-                .upload(fileName, groupImage);
-                
-            if (!error) {
-                const { data: { publicUrl } } = supabase.storage
-                    .from('group-images')
-                    .getPublicUrl(fileName);
-                groupPhotoURL = publicUrl;
-            }
-        }
-        
-        const groupRef = await addDoc(collection(db, 'groups'), {
-            name: groupName,
-            photoURL: groupPhotoURL,
-            members: selectedMembers,
-            createdBy: currentUser.uid,
-            createdAt: serverTimestamp(),
-            lastMessage: null,
-            lastMessageTime: serverTimestamp()
-        });
-        
-        await addDoc(collection(db, 'chats'), {
-            type: 'group',
-            groupId: groupRef.id,
-            groupName: groupName,
-            groupPhotoURL: groupPhotoURL,
-            participants: selectedMembers,
-            createdAt: serverTimestamp(),
-            lastMessage: null,
-            lastMessageTime: serverTimestamp()
-        });
-        
-        showToast('Group created successfully!', 'success');
-        closeModals();
-        switchTab('groups');
-        
-    } catch (error) {
-        console.error('Error creating group:', error);
-        showToast('Failed to create group', 'error');
-    } finally {
-        showLoading(false);
-    }
-}
+// ================= UTILITY FUNCTIONS =================
 
-function openGroupChat(group) {
-    showToast(`Opening group: ${group.name}`, 'info');
-    // Implement group chat functionality
-}
-
-// ================= MENU FUNCTIONS =================
-function showMenu() {
-    if (!menuModal || !currentUser) return;
+function formatTime(date) {
+    if (!date) return '';
+    const now = new Date();
+    const diff = now - date;
     
-    const menuProfilePic = document.getElementById('menu-profile-pic');
-    const menuUserName = document.getElementById('menu-user-name');
-    const menuUserEmail = document.getElementById('menu-user-email');
-    
-    if (menuProfilePic) menuProfilePic.src = currentUser.photoURL || 'https://via.placeholder.com/80';
-    if (menuUserName) menuUserName.textContent = currentUser.displayName;
-    if (menuUserEmail) menuUserEmail.textContent = currentUser.email;
-    
-    menuModal.classList.remove('hidden');
-}
-
-function showProfile() {
-    closeModals();
-    
-    if (!profileModal || !currentUser) return;
-    
-    const profilePic = document.getElementById('profile-modal-pic');
-    const profileName = document.getElementById('profile-modal-name');
-    const profileEmail = document.getElementById('profile-modal-email');
-    const profilePhone = document.getElementById('profile-modal-phone');
-    const profileJoined = document.getElementById('profile-modal-joined');
-    
-    if (profilePic) profilePic.src = currentUser.photoURL || 'https://via.placeholder.com/100';
-    if (profileName) profileName.textContent = currentUser.displayName;
-    if (profileEmail) profileEmail.textContent = currentUser.email;
-    
-    const savedUser = JSON.parse(localStorage.getItem('crunkUser') || '{}');
-    if (profilePhone) profilePhone.textContent = savedUser.phone || 'Not provided';
-    
-    if (profileJoined && currentUser.metadata?.createdAt) {
-        const joined = new Date(currentUser.metadata.createdAt);
-        profileJoined.textContent = `Joined ${joined.toLocaleDateString()}`;
-    }
-    
-    profileModal.classList.remove('hidden');
-}
-
-function toggleTheme() {
-    document.body.classList.toggle('light-theme');
-    const isLight = document.body.classList.contains('light-theme');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    showToast(`Theme switched to ${isLight ? 'light' : 'dark'} mode`, 'success');
-}
-
-function shareApp() {
-    const shareText = `Join me on Crunk Chat! 🎮\nChat with friends and use Venocyber-MD AI created by rajola!`;
-    const shareUrl = window.location.origin;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: 'Crunk Chat',
-            text: shareText,
-            url: shareUrl
-        }).catch(() => {
-            copyToClipboard(shareUrl);
-        });
+    if (diff < 86400000) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {
-        copyToClipboard(shareUrl);
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
 }
 
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('Link copied to clipboard!', 'success');
-    }).catch(() => {
-        showToast('Failed to copy link', 'error');
+// ================= GLOBAL FUNCTIONS =================
+
+window.closeModals = function() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.add('hidden');
     });
-}
+};
 
-function openSettings() {
-    showToast('Settings coming soon!', 'info');
-    closeModals();
-}
-
-// ================= LOGOUT =================
-async function logout() {
-    try {
-        await signOut(auth);
-        localStorage.removeItem('crunkUser');
-        localStorage.removeItem('aiChatHistory');
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error('Logout error:', error);
-        showToast('Failed to logout', 'error');
+window.openImageModal = function(url) {
+    const imageModal = document.getElementById('image-modal');
+    const modalImage = document.getElementById('modal-image');
+    if (imageModal && modalImage) {
+        modalImage.src = url;
+        imageModal.classList.add('active');
     }
-}
+};
 
-// ================= SWITCH TAB =================
-function switchTab(tab) {
-    const tabs = {
-        'chats': { tab: tabChats, view: chatsView },
-        'contacts': { tab: tabContacts, view: contactsView },
-        'groups': { tab: tabGroups, view: groupsView },
-        'ai': { tab: tabAi, view: aiView }
-    };
-    
-    if (tabs[tab]) {
-        document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-        
-        if (tabs[tab].tab) tabs[tab].tab.classList.add('active');
-        if (tabs[tab].view) tabs[tab].view.classList.add('active');
-    }
-}
+// Make functions available globally
+window.showProfile = window.showProfile;
+window.toggleTheme = window.toggleTheme;
+window.shareApp = window.shareApp;
+window.openSettings = window.openSettings;
+window.logout = window.logout;
 
-// ================= EVENT LISTENERS =================
-document.addEventListener('DOMContentLoaded', () => {
-    // Tab switching
-    if (tabChats) tabChats.addEventListener('click', () => switchTab('chats'));
-    if (tabContacts) tabContacts.addEventListener('click', () => switchTab('contacts'));
-    if (tabGroups) tabGroups.addEventListener('click', () => switchTab('groups'));
-    if (tabAi) tabAi.addEventListener('click', () => switchTab('ai'));
-
-    // Back button
-    if (backBtn) {
-        backBtn.addEventListener('click', () => {
-            if (chatScreen) chatScreen.classList.remove('active');
-            if (homeScreen) homeScreen.classList.add('active');
-            if (messagesUnsubscribe) messagesUnsubscribe();
-        });
-    }
-
-    // Send message
-    if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-
-    // Message input
-    if (msgInput) {
-        msgInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-        
-        msgInput.addEventListener('input', () => {
-            if (msgInput.value.trim()) {
-                if (micBtn) micBtn.classList.add('hidden');
-                if (sendBtn) sendBtn.classList.remove('hidden');
-            } else {
-                if (micBtn) micBtn.classList.remove('hidden');
-                if (sendBtn) sendBtn.classList.add('hidden');
-            }
-            
-            if (currentChatId && typingIndicator) {
-                typingIndicator.style.display = 'inline';
-                typingIndicator.textContent = 'typing...';
-                
-                if (typingTimeout) clearTimeout(typingTimeout);
-                typingTimeout = setTimeout(() => {
-                    if (typingIndicator) {
-                        typingIndicator.style.display = 'none';
-                    }
-                }, 1500);
-            }
-        });
-    }
-
-    // Image upload
-    if (attachBtn && imageUpload) {
-        attachBtn.addEventListener('click', () => imageUpload.click());
-    }
-
-    if (imageUpload) {
-        imageUpload.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                if (!file.type.startsWith('image/')) {
-                    showToast('Please select an image file', 'error');
-                    return;
-                }
-                if (file.size > 5 * 1024 * 1024) {
-                    showToast('Image must be less than 5MB', 'error');
-                    return;
-                }
-                await sendImage(file);
-                imageUpload.value = '';
-            }
-        });
-    }
-
-    // Menu
-    if (menuToggle) menuToggle.addEventListener('click', showMenu);
-
-    // Close modals when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal')) {
-            closeModals();
-        }
-    });
-
-    // Close modal button
-    if (closeModal) {
-        closeModal.addEventListener('click', () => {
-            if (imageModal) imageModal.classList.remove('active');
-        });
-    }
-
-    // AI Send
-    if (aiSendBtn && aiInput) {
-        aiSendBtn.addEventListener('click', () => {
-            const message = aiInput.value.trim();
-            if (message) {
-                sendToVenocyber(message);
-                aiInput.value = '';
-            }
-        });
-    }
-
-    if (aiInput) {
-        aiInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const message = aiInput.value.trim();
-                if (message) {
-                    sendToVenocyber(message);
-                    aiInput.value = '';
-                }
-            }
-        });
-    }
-
-    // Clear AI chat
-    if (clearAiChat) {
-        clearAiChat.addEventListener('click', clearAIChat);
-    }
-
-    // Create group button
-    const createGroupBtn = document.getElementById('create-group-btn');
-    if (createGroupBtn) {
-        createGroupBtn.addEventListener('click', showCreateGroupModal);
-    }
-
-    // Search toggle
-    if (searchToggle && searchBar) {
-        searchToggle.addEventListener('click', () => {
-            searchBar.classList.toggle('hidden');
-            if (!searchBar.classList.contains('hidden') && globalSearch) {
-                globalSearch.focus();
-            }
-        });
-    }
-
-    // Clear search
-    if (clearSearch && globalSearch) {
-        clearSearch.addEventListener('click', () => {
-            globalSearch.value = '';
-            renderContacts(allUsers);
-        });
-    }
-
-    // Search functionality
-    if (globalSearch) {
-        globalSearch.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            if (query) {
-                const filtered = allUsers.filter(user => 
-                    user.displayName && user.displayName.toLowerCase().includes(query)
-                );
-                renderContacts(filtered);
-            } else {
-                renderContacts(allUsers);
-            }
-        });
-    }
-
-    // Invite button
-    if (inviteBtn) {
-        inviteBtn.addEventListener('click', () => {
-            const inviteText = `Join me on Crunk Chat!`;
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Crunk Chat',
-                    text: inviteText,
-                    url: window.location.origin
-                }).catch(() => {
-                    copyToClipboard(window.location.origin);
-                });
-            } else {
-                copyToClipboard(window.location.origin);
-            }
-        });
-    }
-
-    // Close reply
-    if (closeReply) {
-        closeReply.addEventListener('click', clearReply);
-    }
-
-    // Online/All filter
-    document.querySelectorAll('.filter-option').forEach(option => {
-        option.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-option').forEach(el => el.classList.remove('active'));
-            e.target.classList.add('active');
-            
-            const filter = e.target.dataset.filter;
-            if (filter === 'online') {
-                const onlineUsersList = allUsers.filter(user => onlineUsers.has(user.uid));
-                renderContacts(onlineUsersList);
-            } else {
-                renderContacts(allUsers);
-            }
-        });
-    });
-
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-        document.body.classList.add('light-theme');
-    }
-});
-
-// ================= EXPOSE GLOBALLY =================
-window.switchTab = switchTab;
-window.showProfile = showProfile;
-window.toggleTheme = toggleTheme;
-window.shareApp = shareApp;
-window.openSettings = openSettings;
-window.closeModals = closeModals;
-window.logout = logout;
-window.createGroup = createGroup;
-window.openImageModal = openImageModal;
-
-console.log('✅ Crunk Chat initialized successfully with Venocyber-MD AI');
+console.log('✅ Chat.js fully loaded and ready!');

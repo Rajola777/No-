@@ -1,4 +1,4 @@
-// venocyber-api.js - Venocyber-MD AI Service
+// venocyber-api.js - Complete with your Gemini API Key
 // Created by rajola
 
 class VenocyberAI {
@@ -7,67 +7,101 @@ class VenocyberAI {
         this.owner = "rajola";
         this.phone = "+255676195192";
         this.channel = "https://whatsapp.com/channel/0029VbCU7aBLikgExwCBqW3P";
-        this.context = [];
-        this.apiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
-        this.apiKey = "AIzaSyBW0Sz7TODfa8tQJTfNUaLhfK9qJhdA1yE"; // Your Firebase API key (can also use Gemini)
         
-        console.log(`🤖 ${this.name} AI initialized by ${this.owner}`);
+        // ✅ YOUR ACTUAL GEMINI API KEY
+        this.geminiApiKey = "AIzaSyDDBlgeloXMaLwY3NftElc6EK7tIF3vTzE";
+        this.geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+        this.model = "gemini-2.0-flash-exp"; // Fast model for chat
+        
+        console.log(`🤖 ${this.name} AI initialized with Gemini API`);
     }
 
-    async getResponse(message) {
+    async chat(message) {
+        if (!message || message.trim() === '') {
+            return "Please say something! 😊";
+        }
+        
+        console.log(`🤖 User asked: "${message}"`);
+        
         try {
             // Try Gemini API first
             const response = await this.callGeminiAPI(message);
             return response;
         } catch (error) {
-            console.log("⚠️ API failed, using local responses:", error);
+            console.error('❌ Gemini API error:', error);
+            // Fallback to local responses if API fails
             return this.getLocalResponse(message);
         }
     }
 
     async callGeminiAPI(message) {
-        try {
-            const response = await fetch(`${this.apiEndpoint}?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `You are Venocyber-MD, an AI chatbot created by rajola. 
-                                  Owner's WhatsApp: +255676195192
-                                  Channel: https://whatsapp.com/channel/0029VbCU7aBLikgExwCBqW3P
-                                  
-                                  User: ${message}
-                                  
-                                  Respond in a helpful, friendly manner. Keep responses concise.`
-                        }]
-                    }]
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`API responded with ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-                return data.candidates[0].content.parts[0].text;
-            } else {
-                throw new Error("Invalid API response structure");
-            }
-        } catch (error) {
-            console.error("❌ Gemini API error:", error);
-            throw error; // Fall back to local responses
+        if (!this.geminiApiKey) {
+            throw new Error('No Gemini API key found');
         }
+
+        // Create the prompt with Venocyber's identity
+        const prompt = `You are Venocyber-MD, an AI chatbot created by rajola. 
+Owner's WhatsApp: +255676195192
+Owner's WhatsApp Channel: https://whatsapp.com/channel/0029VbCU7aBLikgExwCBqW3P
+
+Important rules:
+1. Always introduce yourself as Venocyber-MD when appropriate
+2. Mention that rajola is your creator when asked
+3. Share the WhatsApp channel link when users ask about it
+4. Keep responses friendly, concise, and helpful (max 2-3 sentences)
+5. Use emojis occasionally to be friendly 😊
+
+User message: ${message}
+
+Response:`;
+
+        const response = await fetch(`${this.geminiEndpoint}?key=${this.geminiApiKey}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: prompt
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 200,
+                    topP: 0.9
+                },
+                safetySettings: [
+                    {
+                        category: "HARM_CATEGORY_HARASSMENT",
+                        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        category: "HARM_CATEGORY_HATE_SPEECH",
+                        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                    }
+                ]
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+            return data.candidates[0].content.parts[0].text;
+        }
+        
+        throw new Error('Invalid API response structure');
     }
 
     getLocalResponse(message) {
         const msg = message.toLowerCase().trim();
         
-        // Knowledge base about itself
+        // Knowledge base
         if (msg.includes('who are you') || msg.includes('your name')) {
             return `I'm ${this.name}, an AI chatbot created by ${this.owner}! 🤖`;
         }
@@ -78,15 +112,10 @@ class VenocyberAI {
             return `Join my WhatsApp channel: ${this.channel} 📢`;
         }
         else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
-            const greetings = [
-                `Hello! I'm ${this.name}. How can I help you today? 👋`,
-                `Hi there! Great to chat with you! 😊`,
-                `Hey! What's on your mind? I'm here to help!`
-            ];
-            return greetings[Math.floor(Math.random() * greetings.length)];
+            return `Hello! I'm ${this.name}, created by ${this.owner}. How can I help you today? 👋`;
         }
         else if (msg.includes('how are you')) {
-            return "I'm doing great, thanks for asking! Ready to help you! 😊";
+            return "I'm doing great, thanks for asking! Ready to chat with you! 😊";
         }
         else if (msg.includes('joke') || msg.includes('funny')) {
             const jokes = [
@@ -119,29 +148,19 @@ class VenocyberAI {
 Just ask me anything!`;
         }
         else {
-            // Default responses
             const defaultResponses = [
-                `That's interesting! I'm ${this.name}, created by ${this.owner}. Tell me more!`,
+                `That's interesting! Tell me more.`,
                 "I understand. How can I assist you further?",
                 "Thanks for sharing! What else would you like to know?",
-                "I'm here to help! Feel free to ask me anything.",
-                `By the way, did you know my creator is ${this.owner}? 😊`
+                `By the way, I'm ${this.name} created by ${this.owner}!`,
+                "I'm here to help! Feel free to ask me anything."
             ];
             return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
         }
-    }
-
-    async chat(message) {
-        if (!message || message.trim() === '') {
-            return "Please say something! 😊";
-        }
-        
-        console.log(`🤖 User asked: "${message}"`);
-        const response = await this.getResponse(message);
-        console.log(`🤖 Venocyber responded: "${response}"`);
-        return response;
     }
 }
 
 // Create global instance
 window.venocyber = new VenocyberAI();
+
+console.log('✅ Venocyber-MD AI is ready with your Gemini API key!');

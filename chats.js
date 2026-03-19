@@ -1,6 +1,4 @@
-// chat.js - Complete Working Version with All Features Fixed
-// Created by rajola
-
+// chat.js - Complete Working Chat Application
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { 
     getAuth, 
@@ -40,11 +38,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ================= SUPABASE SETUP =================
-const SUPABASE_URL = 'https://rsrrxgqxwzrtzdecynay.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzcnJ4Z3F4d3pydHpkZWN5bmF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI4OTYwMDAsImV4cCI6MjAyODQ3MjAwMH0.samplekey';
-const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-
 // ================= STATE MANAGEMENT =================
 let currentUser = null;
 let currentChatUser = null;
@@ -76,7 +69,6 @@ function initializeApp() {
         globalSearch: document.getElementById('global-search'),
         clearSearch: document.getElementById('clear-search'),
         
-        // Tabs
         tabChats: document.getElementById('tab-chats'),
         tabContacts: document.getElementById('tab-contacts'),
         tabGroups: document.getElementById('tab-groups'),
@@ -86,13 +78,11 @@ function initializeApp() {
         groupsView: document.getElementById('groups-view'),
         aiView: document.getElementById('ai-view'),
         
-        // Lists
         userList: document.getElementById('user-list'),
         recentChatsList: document.getElementById('recent-chats-list'),
         groupsList: document.getElementById('groups-list'),
         aiMessages: document.getElementById('ai-messages'),
         
-        // Chat screen
         backBtn: document.getElementById('back-btn'),
         chatScreen: document.getElementById('chat-screen'),
         homeScreen: document.getElementById('home-screen'),
@@ -100,6 +90,7 @@ function initializeApp() {
         chatWithName: document.getElementById('chat-with-name'),
         chatStatusIndicator: document.getElementById('chat-status-indicator'),
         chatStatusText: document.getElementById('chat-status-text'),
+        typingIndicator: document.getElementById('typing-indicator'),
         messageBox: document.getElementById('message-box'),
         msgInput: document.getElementById('msg-input'),
         sendBtn: document.getElementById('send-btn'),
@@ -107,25 +98,32 @@ function initializeApp() {
         attachBtn: document.getElementById('attach-btn'),
         imageUpload: document.getElementById('image-upload'),
         
-        // AI
         aiInput: document.getElementById('ai-input'),
         aiSendBtn: document.getElementById('ai-send-btn'),
         clearAiChat: document.getElementById('clear-ai-chat'),
         
-        // Buttons
         inviteBtn: document.getElementById('invite-btn'),
         createGroupBtn: document.getElementById('create-group-btn'),
         
-        // Empty states
         emptyChats: document.getElementById('empty-chats'),
         emptyGroups: document.getElementById('empty-groups'),
         
-        // Toast and loading
         toastContainer: document.getElementById('toast-container'),
-        loadingOverlay: document.getElementById('loading-overlay')
+        loadingOverlay: document.getElementById('loading-overlay'),
+        
+        menuProfile: document.getElementById('menu-profile'),
+        menuTheme: document.getElementById('menu-theme'),
+        menuShare: document.getElementById('menu-share'),
+        menuSettings: document.getElementById('menu-settings'),
+        menuLogout: document.getElementById('menu-logout'),
+        
+        closeProfileModal: document.getElementById('close-profile-modal'),
+        cancelGroup: document.getElementById('cancel-group'),
+        createGroup: document.getElementById('create-group'),
+        closeImageModal: document.getElementById('close-image-modal')
     };
 
-    console.log('📋 DOM elements found:', Object.keys(elements).filter(key => elements[key]).length);
+    console.log('📋 DOM elements found');
 
     // ================= CHECK LOGIN =================
     onAuthStateChanged(auth, async (user) => {
@@ -141,28 +139,19 @@ function initializeApp() {
             
             console.log('👤 Current user:', currentUser.displayName);
             
-            // Save to localStorage
             localStorage.setItem('crunkUser', JSON.stringify(currentUser));
             
-            // Update profile picture
             if (elements.headerProfilePic) {
                 elements.headerProfilePic.src = currentUser.photoURL;
             }
             
-            // Save to Firestore
             await saveUserToFirestore(currentUser);
             
-            // Load data
             loadUsers(elements);
             loadRecentChats(elements);
             loadGroups(elements);
             loadAIChatHistory(elements);
             setupPresence();
-            
-            // Show welcome message in AI
-            if (elements.aiMessages && elements.aiMessages.children.length === 0) {
-                addAIMessage(elements, "Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?", 'ai');
-            }
             
         } else {
             console.log('❌ No user, redirecting to login');
@@ -172,11 +161,11 @@ function initializeApp() {
 
     // ================= MENU FUNCTIONS =================
     if (elements.menuToggle && elements.menuModal) {
-        elements.menuToggle.addEventListener('click', () => {
+        elements.menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
             console.log('🍔 Menu clicked');
             elements.menuModal.classList.remove('hidden');
             
-            // Update menu with user info
             const menuProfilePic = document.getElementById('menu-profile-pic');
             const menuUserName = document.getElementById('menu-user-name');
             const menuUserEmail = document.getElementById('menu-user-email');
@@ -198,102 +187,37 @@ function initializeApp() {
         }
     });
 
-    // ================= LOGOUT =================
-    window.logout = async function() {
-        console.log('🚪 Logging out...');
-        try {
-            await signOut(auth);
-            localStorage.removeItem('crunkUser');
-            localStorage.removeItem('aiChatHistory');
-            showToast(elements, 'Logged out successfully', 'success');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1000);
-        } catch (error) {
-            console.error('Logout error:', error);
-            showToast(elements, 'Failed to logout', 'error');
-        }
-    };
-
-    // ================= PROFILE =================
-    window.showProfile = function() {
-        console.log('👤 Showing profile');
-        closeAllModals();
-        
-        const profileModal = document.getElementById('profile-modal');
-        if (profileModal && currentUser) {
-            const profilePic = document.getElementById('profile-modal-pic');
-            const profileName = document.getElementById('profile-modal-name');
-            const profileEmail = document.getElementById('profile-modal-email');
-            const profilePhone = document.getElementById('profile-modal-phone');
-            
-            if (profilePic) profilePic.src = currentUser.photoURL;
-            if (profileName) profileName.textContent = currentUser.displayName;
-            if (profileEmail) profileEmail.textContent = currentUser.email;
-            
-            // Get phone from localStorage
-            const savedUser = JSON.parse(localStorage.getItem('crunkUser') || '{}');
-            if (profilePhone) profilePhone.textContent = savedUser.phone || 'Not provided';
-            
-            profileModal.classList.remove('hidden');
-        }
-    };
-
-    // ================= THEME TOGGLE =================
-    window.toggleTheme = function() {
-        console.log('🎨 Toggling theme');
-        document.body.classList.toggle('light-theme');
-        const isLight = document.body.classList.contains('light-theme');
-        localStorage.setItem('theme', isLight ? 'light' : 'dark');
-        showToast(elements, `Theme switched to ${isLight ? 'light' : 'dark'} mode`, 'success');
-        closeAllModals();
-    };
-
-    // ================= SHARE APP =================
-    window.shareApp = function() {
-        console.log('📱 Sharing app');
-        const shareText = `Join me on Crunk Chat! 🎮\nChat with friends and use Venocyber-MD AI created by rajola!`;
-        const shareUrl = window.location.origin;
-        
-        if (navigator.share) {
-            navigator.share({
-                title: 'Crunk Chat',
-                text: shareText,
-                url: shareUrl
-            }).catch(() => {
-                copyToClipboard(shareUrl);
-            });
-        } else {
-            copyToClipboard(shareUrl);
-        }
-        closeAllModals();
-    };
-
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            showToast(elements, 'Link copied to clipboard!', 'success');
-        }).catch(() => {
-            showToast(elements, 'Failed to copy link', 'error');
-        });
+    // Menu items
+    if (elements.menuProfile) {
+        elements.menuProfile.addEventListener('click', () => showProfile(elements));
+    }
+    
+    if (elements.menuTheme) {
+        elements.menuTheme.addEventListener('click', () => toggleTheme(elements));
+    }
+    
+    if (elements.menuShare) {
+        elements.menuShare.addEventListener('click', () => shareApp(elements));
+    }
+    
+    if (elements.menuSettings) {
+        elements.menuSettings.addEventListener('click', () => openSettings(elements));
+    }
+    
+    if (elements.menuLogout) {
+        elements.menuLogout.addEventListener('click', () => logout(elements));
     }
 
-    // ================= SETTINGS =================
-    window.openSettings = function() {
-        console.log('⚙️ Opening settings');
-        showToast(elements, 'Settings coming soon!', 'info');
-        closeAllModals();
-    };
-
-    function closeAllModals() {
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.classList.add('hidden');
+    // Close profile modal
+    if (elements.closeProfileModal) {
+        elements.closeProfileModal.addEventListener('click', () => {
+            document.getElementById('profile-modal').classList.add('hidden');
         });
     }
 
     // ================= TAB SWITCHING =================
     if (elements.tabChats && elements.chatsView) {
         elements.tabChats.addEventListener('click', () => {
-            console.log('📋 Chats tab clicked');
             document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
             elements.tabChats.classList.add('active');
             document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -303,7 +227,6 @@ function initializeApp() {
 
     if (elements.tabContacts && elements.contactsView) {
         elements.tabContacts.addEventListener('click', () => {
-            console.log('👥 Contacts tab clicked');
             document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
             elements.tabContacts.classList.add('active');
             document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -313,7 +236,6 @@ function initializeApp() {
 
     if (elements.tabGroups && elements.groupsView) {
         elements.tabGroups.addEventListener('click', () => {
-            console.log('👥 Groups tab clicked');
             document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
             elements.tabGroups.classList.add('active');
             document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -323,7 +245,6 @@ function initializeApp() {
 
     if (elements.tabAi && elements.aiView) {
         elements.tabAi.addEventListener('click', () => {
-            console.log('🤖 AI tab clicked');
             document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
             elements.tabAi.classList.add('active');
             document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -334,7 +255,6 @@ function initializeApp() {
     // ================= SEARCH TOGGLE =================
     if (elements.searchToggle && elements.searchBar) {
         elements.searchToggle.addEventListener('click', () => {
-            console.log('🔍 Search clicked');
             elements.searchBar.classList.toggle('hidden');
             if (!elements.searchBar.classList.contains('hidden') && elements.globalSearch) {
                 elements.globalSearch.focus();
@@ -342,7 +262,6 @@ function initializeApp() {
         });
     }
 
-    // Clear search
     if (elements.clearSearch && elements.globalSearch) {
         elements.clearSearch.addEventListener('click', () => {
             elements.globalSearch.value = '';
@@ -350,7 +269,6 @@ function initializeApp() {
         });
     }
 
-    // Search functionality
     if (elements.globalSearch) {
         elements.globalSearch.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
@@ -370,7 +288,6 @@ function initializeApp() {
         elements.aiSendBtn.addEventListener('click', () => {
             const message = elements.aiInput.value.trim();
             if (message) {
-                console.log('🤖 AI message:', message);
                 sendToVenocyber(elements, message);
                 elements.aiInput.value = '';
             }
@@ -382,7 +299,6 @@ function initializeApp() {
             if (e.key === 'Enter') {
                 const message = elements.aiInput.value.trim();
                 if (message) {
-                    console.log('🤖 AI message (enter):', message);
                     sendToVenocyber(elements, message);
                     elements.aiInput.value = '';
                 }
@@ -390,7 +306,6 @@ function initializeApp() {
         });
     }
 
-    // Clear AI chat
     if (elements.clearAiChat) {
         elements.clearAiChat.addEventListener('click', () => {
             clearAIChat(elements);
@@ -400,7 +315,6 @@ function initializeApp() {
     // ================= BACK BUTTON =================
     if (elements.backBtn && elements.chatScreen && elements.homeScreen) {
         elements.backBtn.addEventListener('click', () => {
-            console.log('⬅️ Back button clicked');
             elements.chatScreen.classList.remove('active');
             elements.homeScreen.classList.add('active');
             if (messagesUnsubscribe) messagesUnsubscribe();
@@ -410,17 +324,17 @@ function initializeApp() {
     // ================= INVITE BUTTON =================
     if (elements.inviteBtn) {
         elements.inviteBtn.addEventListener('click', () => {
-            console.log('📨 Invite clicked');
+            const shareUrl = window.location.origin;
             if (navigator.share) {
                 navigator.share({
                     title: 'Crunk Chat',
                     text: 'Join me on Crunk Chat!',
-                    url: window.location.origin
+                    url: shareUrl
                 }).catch(() => {
-                    copyToClipboard(window.location.origin);
+                    copyToClipboard(elements, shareUrl);
                 });
             } else {
-                copyToClipboard(window.location.origin);
+                copyToClipboard(elements, shareUrl);
             }
         });
     }
@@ -428,8 +342,19 @@ function initializeApp() {
     // ================= CREATE GROUP BUTTON =================
     if (elements.createGroupBtn) {
         elements.createGroupBtn.addEventListener('click', () => {
-            console.log('👥 Create group clicked');
             showCreateGroupModal(elements);
+        });
+    }
+
+    if (elements.cancelGroup) {
+        elements.cancelGroup.addEventListener('click', () => {
+            document.getElementById('group-modal').classList.add('hidden');
+        });
+    }
+
+    if (elements.createGroup) {
+        elements.createGroup.addEventListener('click', () => {
+            createGroup(elements);
         });
     }
 
@@ -484,10 +409,21 @@ function initializeApp() {
         });
     }
 
+    // ================= IMAGE MODAL =================
+    if (elements.closeImageModal) {
+        elements.closeImageModal.addEventListener('click', () => {
+            document.getElementById('image-modal').classList.add('hidden');
+        });
+    }
+
     // Load saved theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'light') {
         document.body.classList.add('light-theme');
+        if (elements.menuTheme) {
+            const icon = elements.menuTheme.querySelector('i');
+            if (icon) icon.className = 'fas fa-sun';
+        }
     }
 
     console.log('✅ UI initialization complete');
@@ -517,13 +453,105 @@ function showToast(elements, message, type = 'info') {
     }, 100);
 }
 
-function showLoading(elements, show) {
-    if (elements.loadingOverlay) {
-        if (show) {
-            elements.loadingOverlay.classList.remove('hidden');
-        } else {
-            elements.loadingOverlay.classList.add('hidden');
+function copyToClipboard(elements, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(elements, 'Link copied to clipboard!', 'success');
+    }).catch(() => {
+        showToast(elements, 'Failed to copy link', 'error');
+    });
+}
+
+function closeAllModals() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.add('hidden');
+    });
+}
+
+// ================= PROFILE FUNCTIONS =================
+function showProfile(elements) {
+    closeAllModals();
+    
+    const profileModal = document.getElementById('profile-modal');
+    if (profileModal && currentUser) {
+        const profilePic = document.getElementById('profile-modal-pic');
+        const profileName = document.getElementById('profile-modal-name');
+        const profileEmail = document.getElementById('profile-modal-email');
+        const profilePhone = document.getElementById('profile-modal-phone');
+        const profileJoined = document.getElementById('profile-modal-joined');
+        
+        if (profilePic) profilePic.src = currentUser.photoURL;
+        if (profileName) profileName.textContent = currentUser.displayName;
+        if (profileEmail) profileEmail.textContent = currentUser.email;
+        
+        const savedUser = JSON.parse(localStorage.getItem('crunkUser') || '{}');
+        if (profilePhone) profilePhone.textContent = savedUser.phone || 'Not provided';
+        
+        if (profileJoined) {
+            const joined = new Date().toLocaleDateString();
+            profileJoined.textContent = `Joined ${joined}`;
         }
+        
+        profileModal.classList.remove('hidden');
+    }
+}
+
+function toggleTheme(elements) {
+    document.body.classList.toggle('light-theme');
+    const isLight = document.body.classList.contains('light-theme');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    
+    const menuTheme = document.getElementById('menu-theme');
+    if (menuTheme) {
+        const icon = menuTheme.querySelector('i');
+        if (icon) {
+            icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        const span = menuTheme.querySelector('span');
+        if (span) {
+            span.textContent = isLight ? 'Light Mode' : 'Dark Mode';
+        }
+    }
+    
+    showToast(elements, `Switched to ${isLight ? 'light' : 'dark'} mode`, 'success');
+    closeAllModals();
+}
+
+function shareApp(elements) {
+    const shareText = `Join me on Crunk Chat! 🎮\nChat with friends and use Venocyber-MD AI created by rajola!`;
+    const shareUrl = window.location.origin;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Crunk Chat',
+            text: shareText,
+            url: shareUrl
+        }).catch(() => {
+            copyToClipboard(elements, shareUrl);
+        });
+    } else {
+        copyToClipboard(elements, shareUrl);
+    }
+    closeAllModals();
+}
+
+function openSettings(elements) {
+    showToast(elements, 'Settings coming soon!', 'info');
+    closeAllModals();
+}
+
+async function logout(elements) {
+    console.log('🚪 Logging out...');
+    try {
+        await signOut(auth);
+        localStorage.removeItem('crunkUser');
+        localStorage.removeItem('aiChatHistory');
+        showToast(elements, 'Logged out successfully', 'success');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+    } catch (error) {
+        console.error('Logout error:', error);
+        showToast(elements, 'Failed to logout', 'error');
     }
 }
 
@@ -699,7 +727,7 @@ function loadRecentChats(elements) {
                         ${isOnline ? '<span class="status-indicator online"></span>' : ''}
                     </div>
                     <div class="chat-last-message">
-                        ${chat.lastMessage?.type === 'text' ? chat.lastMessage.content?.substring(0, 30) + '...' : '📷 Image'}
+                        ${chat.lastMessage?.type === 'text' ? (chat.lastMessage.content || '').substring(0, 30) + '...' : '📷 Image'}
                     </div>
                 </div>
                 <div class="chat-time">${formatTime(lastMessageTime)}</div>
@@ -816,7 +844,7 @@ function renderMessages(elements, messages) {
         } else if (message.type === 'image') {
             messageEl.innerHTML = `
                 <div class="message-content">
-                    <img src="${message.url}" class="message-image" onclick='window.openImageModal("${message.url}")' style="max-width: 200px; max-height: 200px; border-radius: 8px; cursor: pointer;">
+                    <img src="${message.url}" class="message-image" onclick='openImageModal("${message.url}")' style="max-width: 200px; max-height: 200px; border-radius: 8px; cursor: pointer;">
                 </div>
                 <div class="message-info">
                     <span class="message-time">${formatTime(messageDate)}</span>
@@ -836,7 +864,6 @@ async function sendMessage(elements) {
     const content = elements.msgInput ? elements.msgInput.value.trim() : '';
     if (!content) return;
     
-    // Check for AI command
     if (content.startsWith('#ven ')) {
         const aiQuestion = content.substring(5).trim();
         await sendToVenocyber(elements, aiQuestion);
@@ -890,32 +917,17 @@ async function sendImage(elements, file) {
         return;
     }
     
-    showLoading(elements, true);
-    
-    try {
-        // For now, just show a message that image upload is coming
-        showToast(elements, 'Image upload coming soon!', 'info');
-    } catch (error) {
-        console.error('Error:', error);
-        showToast(elements, 'Failed to send image', 'error');
-    } finally {
-        showLoading(elements, false);
-    }
+    showToast(elements, 'Image upload coming soon!', 'info');
 }
 
 // ================= AI FUNCTIONS =================
 
 async function sendToVenocyber(elements, message) {
-    // Add user message
     addAIMessage(elements, message, 'user');
-    
-    // Show typing indicator
     showAITyping(elements, true);
     
     try {
-        // Check if Venocyber is loaded
         if (!window.venocyber) {
-            console.log('⏳ Waiting for Venocyber to load...');
             await new Promise(resolve => {
                 const checkInterval = setInterval(() => {
                     if (window.venocyber) {
@@ -949,31 +961,14 @@ async function sendToVenocyber(elements, message) {
 
 function getFallbackResponse(message) {
     const msg = message.toLowerCase();
-    if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
-        return "Hello! I'm Venocyber-MD, created by rajola. How can I help you today? 👋";
+    if (msg.includes('hello') || msg.includes('hi')) {
+        return "Hello! I'm Venocyber-MD, created by rajola. How can I help? 👋";
     }
-    if (msg.includes('who are you') || msg.includes('your name')) {
+    if (msg.includes('who are you')) {
         return "I'm Venocyber-MD, an AI assistant created by rajola! 🤖";
     }
-    if (msg.includes('owner') || msg.includes('creator') || msg.includes('rajola')) {
+    if (msg.includes('owner') || msg.includes('rajola')) {
         return "My creator is rajola! You can contact them at +255676195192 📱";
-    }
-    if (msg.includes('channel') || msg.includes('whatsapp')) {
-        return "Join my WhatsApp channel: https://whatsapp.com/channel/0029VbCU7aBLikgExwCBqW3P 📢";
-    }
-    if (msg.includes('joke')) {
-        const jokes = [
-            "Why don't scientists trust atoms? Because they make up everything! 😄",
-            "What do you call a fake noodle? An impasta! 🍝",
-            "Why did the scarecrow win an award? He was outstanding in his field! 🌾"
-        ];
-        return jokes[Math.floor(Math.random() * jokes.length)];
-    }
-    if (msg.includes('time')) {
-        return `Current time is ${new Date().toLocaleTimeString()} ⏰`;
-    }
-    if (msg.includes('date')) {
-        return `Today is ${new Date().toLocaleDateString()} 📅`;
     }
     return "I'm Venocyber-MD. How can I assist you today?";
 }
@@ -998,7 +993,6 @@ function addAIMessage(elements, content, sender) {
     
     elements.aiMessages.scrollTop = elements.aiMessages.scrollHeight;
     
-    // Save to history
     aiMessages.push({ content, sender, timestamp: new Date().toISOString() });
     if (aiMessages.length > 50) aiMessages = aiMessages.slice(-50);
     localStorage.setItem('aiChatHistory', JSON.stringify(aiMessages));
@@ -1042,6 +1036,10 @@ function loadAIChatHistory(elements) {
             });
         } catch (e) {
             console.error('Error loading AI history:', e);
+        }
+    } else {
+        if (elements.aiMessages && elements.aiMessages.children.length === 0) {
+            addAIMessage(elements, "Hello! I'm Venocyber-MD, your AI assistant created by rajola. How can I help you today?", 'ai');
         }
     }
 }
@@ -1132,6 +1130,46 @@ function showCreateGroupModal(elements) {
     groupModal.classList.remove('hidden');
 }
 
+async function createGroup(elements) {
+    const groupName = document.getElementById('group-name')?.value.trim();
+    const groupImage = document.getElementById('group-image')?.files[0];
+    const selectedMembers = [];
+    
+    document.querySelectorAll('#member-selection input:checked').forEach(cb => {
+        selectedMembers.push(cb.value);
+    });
+    
+    if (!groupName) {
+        showToast(elements, 'Please enter a group name', 'error');
+        return;
+    }
+    
+    if (selectedMembers.length === 0) {
+        showToast(elements, 'Please select at least one member', 'error');
+        return;
+    }
+    
+    selectedMembers.push(currentUser.uid);
+    
+    try {
+        const groupRef = await addDoc(collection(db, 'groups'), {
+            name: groupName,
+            members: selectedMembers,
+            createdBy: currentUser.uid,
+            createdAt: serverTimestamp(),
+            lastMessage: null,
+            lastMessageTime: serverTimestamp()
+        });
+        
+        showToast(elements, 'Group created successfully!', 'success');
+        document.getElementById('group-modal').classList.add('hidden');
+        
+    } catch (error) {
+        console.error('Error creating group:', error);
+        showToast(elements, 'Failed to create group', 'error');
+    }
+}
+
 // ================= UTILITY FUNCTIONS =================
 
 function formatTime(date) {
@@ -1148,10 +1186,17 @@ function formatTime(date) {
 
 // ================= GLOBAL FUNCTIONS =================
 
-window.closeModals = function() {
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.classList.add('hidden');
-    });
+window.switchToTab = function(tab) {
+    const tabMap = {
+        'contacts': document.getElementById('tab-contacts'),
+        'chats': document.getElementById('tab-chats'),
+        'groups': document.getElementById('tab-groups'),
+        'ai': document.getElementById('tab-ai')
+    };
+    
+    if (tabMap[tab]) {
+        tabMap[tab].click();
+    }
 };
 
 window.openImageModal = function(url) {
@@ -1159,15 +1204,8 @@ window.openImageModal = function(url) {
     const modalImage = document.getElementById('modal-image');
     if (imageModal && modalImage) {
         modalImage.src = url;
-        imageModal.classList.add('active');
+        imageModal.classList.remove('hidden');
     }
 };
-
-// Make functions available globally
-window.showProfile = window.showProfile;
-window.toggleTheme = window.toggleTheme;
-window.shareApp = window.shareApp;
-window.openSettings = window.openSettings;
-window.logout = window.logout;
 
 console.log('✅ Chat.js fully loaded and ready!');

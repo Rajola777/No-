@@ -312,7 +312,41 @@
         <div class="loading-spinner"></div>
         <p>Loading...</p>
     </div>
+<script>
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('✅ ServiceWorker registered:', registration.scope);
+                
+                // Request notification permission
+                if ('Notification' in window && Notification.permission !== 'granted') {
+                    Notification.requestPermission();
+                }
+            })
+            .catch(error => {
+                console.log('❌ ServiceWorker registration failed:', error);
+            });
+    });
+}
 
+// Listen for online/offline events
+window.addEventListener('online', () => {
+    console.log('📶 You are back online');
+    window.showToast('You are back online!', 'success');
+});
+
+window.addEventListener('offline', () => {
+    console.log('📶 You are offline');
+    window.showToast('You are offline. Messages will be sent when reconnected.', 'warning');
+});
+
+// Check initial status
+if (!navigator.onLine) {
+    console.log('📶 Starting in offline mode');
+}
+</script>
     <!-- Main Chat Script -->
     <script type="module" src="chat.js"></script>
 </body>
